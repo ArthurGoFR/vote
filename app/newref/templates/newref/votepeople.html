@@ -1,0 +1,34 @@
+{% extends 'coeur/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+
+{% block title %}Couture en tête{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+
+
+{% block content %}
+
+<table class="table">
+  <thead>
+    <tr>
+
+      <th scope="col">Last</th>
+      <th scope="col">Handle</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for rawvote in ref.rawvotes %}
+    <tr>
+      <td>{{rawvote.email}}</td>
+      <td>{% if rawvote.json %}A voté{% else %}N'a pas voté{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endblock %}

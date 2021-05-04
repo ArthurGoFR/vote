@@ -1,0 +1,73 @@
+{% extends 'newref/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+
+{% block title %}Couture en tête{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+
+
+{% block content %}
+
+<nav aria-label="..." class="mb-5">
+  <ul class="pagination">
+
+    <li class="page-item"><a class="page-link" href="{% url 'voteadmin' ref.hash %}">Configuration</a></li>
+    <li class="page-item"><a class="page-link" href="{% url 'voteadmin_questions' ref.hash %}">Questions & Options</a></li>
+    <li class="page-item active" aria-current="page">
+      <span class="page-link">
+        Liste des votants
+        <span class="sr-only">(current)</span>
+      </span>
+    </li>
+
+    
+    <li class="page-item"><a class="page-link" href="{% url 'voteadmin_bulletins' ref.hash %}">Envoi des bulletins</a></li>
+    <li class="page-item"><a class="page-link"href="{% url 'voteadmin_depouillement' ref.hash %}">Dépouillement</a></li>
+  </ul>
+</nav>
+
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+  Cette page permet de construire la liste des votants, c'est-à-dire la liste des adresses mail qui recevront un bulletin. Il est possible de revenir dessus tant que les bulletins n'ont pas été envoyés.
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+{% if ref.status == "CONFIG" %}
+<h3 class="mt-4 mb-4">Alimenter la liste</h3>
+
+<form method="post" enctype="multipart/form-data" action="{% url 'voteadmin_votants' ref.hash %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="exampleFormControlFile1">Envoyer un fichier au format CSV avec une adresse mail par ligne</label>
+    <input type="file" name ="file" class="form-control-file" id="exampleFormControlFile1" accept=".csv" required>
+  </div>
+   <button type="submit" class="btn btn-primary">Alimenter</button>
+</form>
+
+{% if msg %}
+<div class="alert alert-secondary mb-4 mt-4" role="alert">{{msg | safe}}</div>
+{% endif %}
+
+{% endif %}
+
+<h3 class="mt-4 mb-4">La liste des votants ({{ref.rawvotes.count}})</h3>
+
+<ul class="list-group">
+  {% for rawvote in ref.rawvotes %}
+  <li class="list-group-item">{{rawvote.email}} 
+    {% if ref.status == "CONFIG" %}<a href="{% url 'delete_rawvote' ref.hash rawvote.id %}" style="color:red;">(X)</a>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+
+
+
+
+
+{% endblock %}

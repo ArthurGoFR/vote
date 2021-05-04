@@ -1,0 +1,3 @@
+app/venv
+app/db.sqlite
+app/testlog.log

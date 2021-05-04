@@ -1,0 +1,71 @@
+{% extends 'newref/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+
+{% block title %}Couture en tête{% endblock %}
+
+{% block head %}
+
+{% endblock %}
+
+
+
+{% block content %}
+
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-warning mb-4" data-toggle="modal" data-target="#exampleModal">
+  Lancer une nouvelle votation
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Lancer une nouvelle votation</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+            <form method="post" actioon="{% url 'refs' %}">
+                {% csrf_token %}
+                 {{form | crispy}}
+                 <button type="submit" class="btn btn-primary">Commencer à créer</button>
+            </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form method ="POST" action="{% url 'secret_key_check' %}">
+    {% csrf_token %}
+    <div class="form-row align-items-center">
+      <div class="col-sm-3 my-1">
+        <label class="sr-only" for="inlineFormInputName">Name</label>
+        <input type="text" name="secret_key" class="form-control" id="inlineFormInputName" placeholder="Un code secret">
+      </div>
+  
+      <div class="col-auto my-1">
+        <button type="submit" class="btn btn-primary">Accéder à l'administration d'une votation existante</button>
+      </div>
+    </div>
+  </form>
+
+<h3 class="mb-3 mt-3">Votations existantes</h3>
+
+<ul class="list-group">
+  {% for ref in refs %}
+  <li class="list-group-item">{{ref.text}}</li>
+  {% endfor %}
+</ul>
+
+
+
+
+
+{% endblock %}

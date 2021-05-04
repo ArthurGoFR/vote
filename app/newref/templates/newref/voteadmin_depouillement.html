@@ -1,0 +1,88 @@
+{% extends 'newref/base.html' %} {% load static %} {% load crispy_forms_tags %}
+{% block title %}Couture en tête{% endblock %} {% block head %} {% endblock %}
+{% block content %}
+
+<nav aria-label="..." class="mb-5">
+  <ul class="pagination">
+    <li class="page-item">
+      <a class="page-link" href="{% url 'voteadmin' ref.hash %}"
+        >Configuration</a
+      >
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="{% url 'voteadmin_questions' ref.hash %}"
+        >Questions & Options</a
+      >
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="{% url 'voteadmin_votants' ref.hash %}"
+        >Liste des votants</a
+      >
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="{% url 'voteadmin_bulletins' ref.hash %}"
+        >Envoi des bulletins</a
+      >
+    </li>
+    <li class="page-item active" aria-current="page">
+      <span class="page-link">
+        Dépouillement
+        <span class="sr-only">(current)</span>
+      </span>
+    </li>
+  </ul>
+</nav>
+
+<div class="alert alert-info alert-dismissible fade show" role="alert">
+  Cette page permet de réaliser le dépouillement et de communiquer les résultats.
+  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+
+<div
+  class="alert alert-primary mb-4"
+  onclick=" window.open('{% url 'preview_bulletin' ref.hash %}','_blank')"
+>
+  {{ref.valid_rawvotes.count}} bulletins ont été retournés.
+</div>
+
+{% if not ref.status == "FINISHED" %}
+
+  {% if ref.when == "after" %}
+<button
+  class="btn btn-primary mb-4"
+  onclick=" window.open('{% url 'ref_depouillement' ref.hash %}')"
+>
+  Procéder au dépouillement
+</button>
+<div>
+  {% else %}
+<div class="alert alert-primary">Il faut attendre la fin des votes pour procéder au dépouillement.</div>
+  {% endif %}
+
+{% else %}
+<div class="alert alert-primary">Le dépouillement a été réalisé. Les résultats sont disponibles</div>
+{% endif %}
+
+
+{% if  ref.status == "FINISHED" %}
+<button
+  class="btn btn-primary mb-4"
+  onclick=" window.open('{% url 'ref_results' ref.id %}','_blank')"
+>
+  Visualiser les résultats
+</button>
+{% endif %}
+
+<div>
+<button
+  class="btn btn-warning mb-4"
+  onclick=" window.open('{% url 'communicate_results' ref.hash %}')"
+  disabled
+>
+  Communiquer les résultats
+</button>
+
+{% endblock %}
