@@ -32,6 +32,7 @@ DOMAIN_NAME = "127.0.0.1:8000"
 
 INSTALLED_APPS = [
     'newref.apps.NewrefConfig',
+    # 'enigma.apps.EnigmaConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

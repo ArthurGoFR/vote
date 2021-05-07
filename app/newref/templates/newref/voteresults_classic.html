@@ -1,0 +1,22 @@
+{% extends 'newref/base.html' %} {% load static %} {% load crispy_forms_tags %}
+{% block title %}Couture en tête{% endblock %} {% block head %} {% endblock %}
+{% block content %}
+
+<h3 class="mb-4">{{ref.text}}</h3>
+
+{% for question in ref.questions %}
+
+<div><strong>{{question.text}}</strong></div>
+
+<table class="table table-bordered">
+  <tbody>
+    {% for option in question.options %}
+    <tr>
+      <td>{{option.text}}</td>
+      <td>{{option.results}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% endfor %} {% endblock %}

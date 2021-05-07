@@ -41,10 +41,7 @@
 </div>
 
 
-<div
-  class="alert alert-primary mb-4"
-  onclick=" window.open('{% url 'preview_bulletin' ref.hash %}','_blank')"
->
+<div class="alert alert-primary mb-4">
   {{ref.valid_rawvotes.count}} bulletins ont été retournés.
 </div>
 
@@ -53,13 +50,19 @@
   {% if ref.when == "after" %}
 <button
   class="btn btn-primary mb-4"
-  onclick=" window.open('{% url 'ref_depouillement' ref.hash %}')"
+  onclick="location.href ='{% url 'ref_depouillement' ref.hash %}'"
 >
   Procéder au dépouillement
 </button>
 <div>
   {% else %}
-<div class="alert alert-primary">Il faut attendre la fin des votes pour procéder au dépouillement.</div>
+<div class="alert alert-warning">
+  Il faut attendre la fin des votes pour procéder au dépouillement. <br/>
+  Il est cependant possible de réaliser un
+  <a href="{% url 'voteadmin_depouillement_anticipe' ref.hash %}">
+    dépouillement anticipé
+  </a>
+</div>
   {% endif %}
 
 {% else %}

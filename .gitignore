@@ -1,3 +1,5 @@
 app/venv
-app/db.sqlite
-app/testlog.loggg
+app/enigma
+app/enigma3
+app/db.sqlite3
+app/testlog.log

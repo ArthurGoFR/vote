@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 
 
-{% block title %}Couture en tête{% endblock %}
+{% block title %}Décidons{% endblock %}
 
 {% block head %}
 
@@ -41,10 +41,26 @@
   <fieldset {% if not ref.status == "CONFIG" %}disabled="disabled"{% endif %}>
   {% csrf_token %}
    {{form | crispy}}
-   <button type="submit" class="btn btn-primary">Enregistrer</button>
+   <button id="savebut" type="submit" class="btn btn-outline-primary">
+      Enregistrer
+    	<span hidden id="spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>  
+    </button>
   </fieldset>
 </form>
 
+<script type="text/javascript">
+	$(document).ready(function () {
+    
 
+    $("form").bind("change paste keyup", function() {
+        $("#savebut").attr('class', 'btn btn-warning');
+    });
+
+    $("#savebut").click(function() {
+			$("#spinner").removeAttr('hidden');
+		});
+
+  });
+</script>
 
 {% endblock %}

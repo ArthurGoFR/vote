@@ -77,6 +77,9 @@ def voteadmin(request, hash):
 		form = RefForm(request.POST, instance=ref)
 		if form.is_valid():
 			ref = form.save()
+			raw = Rawvote.objects.get(ref = ref, email = "test@exemple.fr")
+			raw.json = None
+			raw.save()
 
 	form = RefForm(instance=ref)
 
@@ -89,7 +92,6 @@ def voteadmin_questions(request, hash):
 	ref = Ref.objects.get(hash = hash)
 
 	if request.method == "POST":
-		print(request.POST)
 		try:
 			form = OptionForm(ref, request.POST)
 			option = form.save()
@@ -192,6 +194,10 @@ def voteadmin_bulletins(request, hash):
 	template = "newref/voteadmin_bulletins.html"
 	ref = Ref.objects.get(hash = hash)
 	
+	if ref.status != "CONFIG":
+		ref.sent_rawvotes = Rawvote.objects.filter(ref=ref).exclude(status="INIT").exclude(email="test@exemple.fr")
+		ref.unsent_rawvotes = Rawvote.objects.filter(ref=ref).filter(status="INIT").exclude(email="test@exemple.fr")
+
 	if request.method == "POST":
 		form = BulletinRefForm(request.POST, instance = ref)
 		if form.is_valid():
@@ -304,7 +310,7 @@ def send_bulletins(request, hash):
 
 #Page de vote
 def votepage(request, code):
-	template = "newref/votepage_alter.html"
+	
 	rawvote = Rawvote.objects.get(code = code)
 	ref = rawvote.ref
 	ref.questions = Question.objects.filter(ref = ref)
@@ -314,12 +320,19 @@ def votepage(request, code):
 		if form.is_valid():
 			rawvote = form.save()
 
-	for question in ref.questions:
-		question.options = Option.objects.filter(question = question)
-		try:
-			question.order = rawvote.json[str(question.id)]
-		except:
-			question.order = []
+	if ref.depouillement == "ALT":
+		template = "newref/votepage_alter.html"
+		for question in ref.questions:
+			question.options = Option.objects.filter(question = question)
+			try:
+				question.order = rawvote.json[str(question.id)]
+			except:
+				question.order = []
+
+	elif ref.depouillement == "CLASSIC":
+		template = "newref/votepage_classic.html"
+		for question in ref.questions:
+			question.options = Option.objects.filter(question = question)
 
 	form = RawvoteForm(instance = rawvote)
 
@@ -340,8 +353,8 @@ def voteadmin_depouillement(request, hash):
 	template = "newref/voteadmin_depouillement.html"
 	ref = Ref.objects.get(hash = hash)
 	
-	today=datetime.date(datetime.today())
 	
+	today=datetime.date(datetime.today())
 	try:
 		if today<ref.start:
 			ref.when = "before"
@@ -356,15 +369,47 @@ def voteadmin_depouillement(request, hash):
 	context = {"ref":ref}
 	return render(request, template, context)
 
+def voteadmin_depouillement_anticipe(request, hash):
+	template = "newref/voteadmin_depouillement.html"
+	ref = Ref.objects.get(hash = hash)
+	
+	ref.when = "after"
+	
+	ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(json__isnull=False)
+	context = {"ref":ref}
+	return render(request, template, context)
+
+
 #Ce qu'on envoie pour lancer le dépouillement
 def ref_depouillement(request, hash):
 	ref = Ref.objects.get(hash=hash)
 	if ref.depouillement == "ALT":
 		trait_alter(ref)
-		ref.status="FINISHED"
-		ref.save()
+	if ref.depouillement == "CLASSIC":
+		trait_classic(ref)
+	
+	ref.status="FINISHED"
+	ref.save()
 	return HttpResponseRedirect(reverse('voteadmin_depouillement', args = (hash,)))
 
+#Fonction qui calcul les résultats pour un vote classic
+def trait_classic(ref):
+	questions = Question.objects.filter(ref = ref)
+	valid_rawvotes = Rawvote.objects.filter(ref = ref).exclude(json__isnull=True)
+	Touralter.objects.filter(question__in=questions).delete()
+
+	for question in questions:
+		options = Option.objects.filter(question = question)
+		tour = Touralter()
+		tour.question = question
+		results = {}
+		for option in options:
+			results[str(option.id)] = 0
+		for valid_rawvote in valid_rawvotes:
+			opt_id = str(valid_rawvote.json[str(question.id)])
+			results[opt_id] = results[opt_id] + 1
+		tour.results= results
+		tour.save()
 
 #Fonction qui calcul les résultats pour un vote alternatif
 def trait_alter(ref):
@@ -406,7 +451,7 @@ def fakevotes(id_ref):
 	letters = string.ascii_lowercase
 
 	ref = Ref.objects.get(id=id_ref)
-	Rawvote.objects.filter(ref=ref).delete()
+	Rawvote.objects.filter(ref=ref).exclude(email="test@exemple.fr").delete()
 
 	for i in range(100):
 		rawvote = Rawvote()
@@ -432,25 +477,69 @@ def fakevotes(id_ref):
 		rawvote.json = {"1": ["3", "1", "2"], "2": ["4", "5"]}
 		rawvote.save()
 
+def fakevotes_classic(id_ref):
+	import random
+	import string
+	letters = string.ascii_lowercase
+
+	ref = Ref.objects.get(id=id_ref)
+	# questions = Question.objects.get(ref=ref)
+	# for question in questions:
+	# 	question.option = 
+
+	Rawvote.objects.filter(ref=ref).exclude(email="test@exemple.fr").delete()
+
+	for i in range(100):
+		rawvote = Rawvote()
+		rawvote.ref = ref
+		rawvote.email = ''.join(random.choice(letters) for i in range(10))+"@gmail.com"
+		rawvote.code = ''.join(random.choice(letters) for i in range(50))
+		rawvote.json = {"6": "10", "7": "12"}
+		rawvote.save()
+
+	for i in range(90):
+		rawvote = Rawvote()
+		rawvote.ref = ref
+		rawvote.email = ''.join(random.choice(letters) for i in range(10))+"@gmail.com"
+		rawvote.code = ''.join(random.choice(letters) for i in range(50))
+		rawvote.json = {"6": "11", "7": "13"}
+		rawvote.save()
+
+	for i in range(80):
+		rawvote = Rawvote()
+		rawvote.ref = ref
+		rawvote.email = ''.join(random.choice(letters) for i in range(10))+"@gmail.com"
+		rawvote.code = ''.join(random.choice(letters) for i in range(50))
+		rawvote.json = {"6": "10", "7": "13"}
+		rawvote.save()
+
 #Afficher les résultats des votes alternatifs
 def ref_results(request, id_ref):
-	template = "newref/voteresults.html" 
-
 	ref = Ref.objects.get(id = id_ref)
-	ref.questions = Question.objects.filter(ref = ref)
-	for question in ref.questions:
-		question.touralters = Touralter.objects.filter(question=question)
-		question.options = Option.objects.filter(question = question)	
-		
-		for option in question.options:
-			option.horizontal_results = {}
-			for touralter in question.touralters:
-				option.horizontal_results[touralter.num] = touralter.results[str(option.id)]
-
+	if ref.depouillement=="ALT":
+		template = "newref/voteresults_alt.html" 
+		ref.questions = Question.objects.filter(ref = ref)
+		for question in ref.questions:
+			question.touralters = Touralter.objects.filter(question=question)
+			question.options = Option.objects.filter(question = question)	
+			
+			for option in question.options:
+				option.horizontal_results = {}
+				for touralter in question.touralters:
+					option.horizontal_results[touralter.num] = touralter.results[str(option.id)]
 		# for option in question.options:
 		# 	option.value = {}
 		# 	for touralter in touralters:
 		# 		option.value[touralter.num] = touralter.results[str(option.id)]
+	elif ref.depouillement=="CLASSIC":
+		template = "newref/voteresults_classic.html"
+		ref.questions = Question.objects.filter(ref = ref)
+		for question in ref.questions:
+			touralter = Touralter.objects.get(question=question)
+			question.options = Option.objects.filter(question = question)	
+			for option in question.options:
+				option.results = touralter.results[str(option.id)]
+
 
 	context = {"ref": ref}
 	return render(request, template, context)

@@ -13,11 +13,21 @@
 
 {% block content %}
 
-<div>Ceci est la page de vote de {{rawvote.email}}. Ne partagez pas cette URL : une personne en disposant pourrait modifier vos réponses.</div>
-<h3 class="mt-4 mb-4">{{ref.text}}</h3>
+<div class="alert alert-info">
+	Ceci est la page de vote de {{rawvote.email}}. <br/>
+	Ne partagez pas cette URL : une personne en disposant pourrait modifier vos réponses. <br/>
+	<strong>
+		Le vote se fait par "Glisser-Déposer" ou "Drag & Drop". En d'autres termes, restez appuyé.e sur une option pour la déplacer dans la liste.
+	</strong><br/>
+	<strong>Les votes sont ouverts jusqu'au {{ref.end}} inclus</strong>
+</div>
+
+<h3 class="mt-4 mb-4">
+	{{ref.text}}
+</h3>
 
 {% if rawvote.json %}
-<div id="alert_ok" class="alert alert-primary">
+<div id="alert_ok" class="alert alert-primary alertcustom">
 	Vos réponses sont bien enregistrées. 
 
 	<button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#exampleModal">
@@ -44,89 +54,89 @@
 	    </div>
 	  </div>
 	</div>
-
-
 </div>
 
 {% else %}
-<div id="alert_empty" class="alert alert-secondary">
+<div id="alert_empty" class="alert alert-secondary alertcustom">
 	Vous n'avez pas de réponses enregistrées.
 </div>
 {% endif %}
 
-<div id="alert_nok" class="alert alert-warning">
+<div id="alert_nok" class="alert alert-warning alertcustom">
 	Attention, vos réponses ne sont pas enregistrées.
 </div>
 
-<script type="text/javascript">
-	/* lists contient toutes les instances de sortable*/
-	var lists = {};
-	$('#alert_nok').hide();
 
-</script>
 
 {% for question in ref.questions %}
-
-	<h4 class="mt-4">{{question.text}}</h4>
-
-	<div>Mettez au dessus les réponses qui vous conviennent le mieux</div>
-
+	<h4 class="mt-4">
+		{{question.text}}
+	</h4>
+	<div>
+		Hiérarchisez vos réponses : en haut celles qui vous conviennent le mieux
+	</div>
 	<ul id="q{{question.id}}" class="list-group">
 		{% for option in question.options %}
-		<li id="{{option.id}}" class="list-group-item">{{option.text}}</a></li>
+		<li id="{{option.id}}" class="list-group-item">
+			{{option.text}}
+		</li>
 		{% endfor %}
 	</ul>
 
-	<script type="text/javascript">
-
-	list = document.getElementById("q{{question.id}}")
-
-	list{{question.id}} = Sortable.create(list, { 
-		dataIdAttr: 'id',
-		onUpdate: function (evt) {
-			getOrders();
-		}
-	});
-
-	order = {{question.order|safe}};
-	list{{question.id}}.sort(order);
-	lists[{{question.id}}] = list{{question.id}}
-
-	</script>
-
 {% endfor %}
-
-
-
-
 
 <form method="post" action="{% url 'votepage' rawvote.code %}">
 	{% csrf_token %}
 	{{form|crispy}}
-	<button id ="savebut" type="submit" class="btn btn-outline-primary btn-lg mt-4" disabled><span id="spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Enregistrer</button>
+	<button id ="savebut" type="submit" class="btn btn-outline-primary btn-lg mt-4" disabled>
+		<span id="spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true">
+		</span> 
+		Enregistrer
+	</button>
 </form>
 
 
-
 <script type="text/javascript">
-	
-	$("#spinner").hide();
+	$(document).ready(function () {
+		{% comment %} On cache certains trucs {% endcomment %}
+		$('#alert_nok').hide();
+		$("#spinner").hide();
+		
+		
+		var lists = {};
+		{% for question in ref.questions %}
+			{% comment %} Pour chaque question : on ajoute un objet sortable{% endcomment %}	
+			list = document.getElementById("q{{question.id}}")
+			list{{question.id}} = Sortable.create(list, { 
+				dataIdAttr: 'id',
+				onUpdate: function (evt) {
+					getOrders();
+				}
+			});
 
-	function getOrders() {
-		json = {};
-		for (const[key,value] of Object.entries(lists)) {
-			json[key]=value.toArray();
+			{% comment %} Pour appliquer l'ordre enregistré {% endcomment %}
+			order = {{question.order|safe}};
+			list{{question.id}}.sort(order);
+			lists[{{question.id}}] = list{{question.id}}
+		{% endfor %}
+
+
+		{% comment %} La fonction qui s'active à chaque changement d'odre {% endcomment %}
+		function getOrders() {
+			json = {};
+			for (const[key,value] of Object.entries(lists)) {
+				json[key]=value.toArray();
+			};
+			$('[name="json"]').val(JSON.stringify(json));
+			$('.alertcustom').hide();
+			$('#alert_nok').show();
+			$('#savebut').attr("class","btn btn-warning btn-lg mt-4")
+			$("#savebut").prop("disabled",false);
 		};
-		$('[name="json"]').val(JSON.stringify(json));
-		$('.alert').hide();
-		$('#alert_nok').show();
-		$('#savebut').attr("class","btn btn-warning btn-lg mt-4")
-		$("#savebut").prop("disabled",false);
-	};
 
-	$("#savebut").click(function() {
-
-		$("#spinner").show();
+		$("#savebut").click(function() {
+			$("#spinner").show();
+		});
 	});
 
 </script>

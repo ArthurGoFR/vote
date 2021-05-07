@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 
 
-{% block title %}Couture en tête{% endblock %}
+{% block title %}Décidons{% endblock %}
 
 {% block head %}
 
@@ -39,15 +39,19 @@
 </div>
 
 {% if ref.status == "CONFIG" %}
-<h3 class="mt-4 mb-4">Alimenter la liste</h3>
 
 <form method="post" enctype="multipart/form-data" action="{% url 'voteadmin_votants' ref.hash %}">
   {% csrf_token %}
   <div class="form-group">
-    <label for="exampleFormControlFile1">Envoyer un fichier au format CSV avec une adresse mail par ligne</label>
+    <label for="exampleFormControlFile1">
+      Envoyer un fichier au format .CSV avec une adresse mail par ligne, sans titre.
+      <a href="{% static 'newref/csv/exemple.csv' %}" target="_blank">Exemple de .CSV valide</a>.
+      Envoyer un nouveau .CSV n'efface pas la liste.
+      </label>
+      
     <input type="file" name ="file" class="form-control-file" id="exampleFormControlFile1" accept=".csv" required>
   </div>
-   <button type="submit" class="btn btn-primary">Alimenter</button>
+   <button id="savebut" type="submit" class="btn btn-outline-primary">Alimenter la liste</button>
 </form>
 
 {% if msg %}
@@ -66,7 +70,16 @@
   {% endfor %}
 </ul>
 
+<script type="text/javascript">
+	$(document).ready(function () {
+    
+    $("form").bind("change paste keyup", function() {
+        $("#savebut").attr('class', 'btn btn-warning');
+    });
 
+
+  });
+</script>
 
 
 

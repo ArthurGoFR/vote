@@ -31,6 +31,7 @@ DOMAIN_NAME = os.environ.get('DOMAIN_NAME')
 
 INSTALLED_APPS = [
     'newref.apps.NewrefConfig',
+    # 'enigma.apps.EnigmaConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

@@ -27,6 +27,8 @@ urlpatterns = [
     path('send_bulletins/<str:hash>', views.send_bulletins, name='send_bulletins'),
 
     path('voteadmin_depouillement/<str:hash>', views.voteadmin_depouillement, name='voteadmin_depouillement'),
+    path('voteadmin_depouillement_anticipe/<str:hash>', views.voteadmin_depouillement_anticipe, name='voteadmin_depouillement_anticipe'),
+
     path('ref_depouillement/<str:hash>', views.ref_depouillement, name='ref_depouillement'),
     path('ref_results/<int:id_ref>', views.ref_results, name='ref_results'),
     path('communicate_results/<str:hash>', views.communicate_results, name='communicate_results'),

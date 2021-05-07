@@ -3,7 +3,7 @@
 {% load crispy_forms_tags %}
 
 
-{% block title %}Couture en tête{% endblock %}
+{% block title %}Décidons{% endblock %}
 
 {% block head %}
 
@@ -37,20 +37,50 @@
   </button>
 </div>
 
-<form method="post" action="{% url 'voteadmin_bulletins' ref.hash %}">
+{% if not ref.status == "CONFIG" %}
+  <div class="alert alert-primary mt-4">
+    {{ref.sent_rawvotes.count}} bulletins ont été envoyés. {{ref.unsent_rawvotes.count}} n'ont pas été envoyés.<br/>
+    <br/>
+
+      <strong>Bulletins non-envoyés :<br /></strong>
+      {% for rawvote in ref.unsent_bulletins %}
+        {{ref.unsent_rawvotes.email}}
+      {% endfor %}
+      <br />
+      <strong>Bulletins envoyés :<br/></strong>
+      {% for rawvote in ref.sent_rawvotes %}
+        {{rawvote.email}}<br/>
+      {% endfor %}
+  </div>
+
+  <hr>
+
+{% endif %}
+
+
+
+<form id="ref_for" method="post" action="{% url 'voteadmin_bulletins' ref.hash %}">
   <fieldset {% if not ref.status == "CONFIG" %}disabled="disabled"{% endif %}>
   {% csrf_token %}
    {{form | crispy}}
-   <button type="submit" class="btn btn-primary">Enregistrer</button>
+    <button id = "savebut" type="submit" class="btn btn-outline-primary">
+    <span hidden id="spinner_1" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>  
+    Enregistrer
+    </button>
   </fieldset>
 </form>
 
 <hr>
 
+<div class="mb-2">
+  Un mail de test permet de s'assurer que la boite d'envoi choisie ci-dessus fonctionne bien.<br />
+  Vous devez recevoir un mail ayant pour objet "Décidons : Test de connexion réussi !". 
+</div>
+
 <form method="post" action="{% url 'test_email_sending' ref.hash %}">
   {% csrf_token %}
    <input type="email" name="email">
-   <button type="submit" class="btn btn-primary">Envoyer un mail de test à cette adresse</button>
+   <button type="submit" class="btn btn-primary ml-2">Envoyer un mail de test à cette adresse</button>
 </form>
 
 <hr>
@@ -81,14 +111,31 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-          <button type="button" class="btn btn-warning" onclick="window.open('{% url 'send_bulletins' ref.hash %}')">J'ai tout vérifié, allons-y !</button>
+          <button id="sendbut" type="button" class="btn btn-warning" 
+            onclick="location.href ='{% url 'send_bulletins' ref.hash %}'">
+            J'ai tout vérifié, allons-y !
+          	<span hidden id="spinner_2" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>     
+            </button>
         </div>
       </div>
     </div>
   </div>
-
-{% else %}
-<div class="alert alert-primary mt-4">Les bulletins ont été envoyés</div>
 {% endif %}
+
+
+<script type="text/javascript">
+	$(document).ready(function () {
+    
+    $("#refform").bind("change paste keyup", function() {
+        $("#savebut").attr('class', 'btn btn-warning');
+    });
+
+     $("#sendbut").click(function() {
+			  $("#spinner_2").removeAttr('hidden');
+		});
+
+  });
+</script>
+
 
 {% endblock %}

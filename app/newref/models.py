@@ -7,8 +7,8 @@ class DateInput(DateInput):
     input_type = 'date'
 
 DEP_CHOICES = [
-    ('ALT', "Hiérarchisation des options & Vote alternatif"),
-    # ('CLASSIC', "Choix d'une option & Vote à un tour"),
+    ('ALT', "Choix : Hiérarchisation des options (par Drag & Drop) - Comptabilisation : vote alternatif"),
+    ('CLASSIC', "Choix : Sélection d'une option - Comptabilisation : Classique"),
     ]
 
 STATUS_CHOICES = [
@@ -111,9 +111,6 @@ class QuestionForm(ModelForm):
         fields = ['text']
 
         widgets = {
-            # 'cat': RadioSelect(attrs={'cols': 80, 'rows': 20}),
-            # 'cat': RadioSelect(),
-            # 'text':Textarea(attrs={'cols': 80, 'rows': 5})
         }
         labels = {
             'text': 'Intitulé de la question :',
@@ -128,11 +125,6 @@ class OptionForm(ModelForm):
         model = Option
         fields = ["question",'text']
 
-        widgets = {
-            # 'cat': RadioSelect(attrs={'cols': 80, 'rows': 20}),
-            # 'cat': RadioSelect(),
-            # 'text':Textarea(attrs={'cols': 80, 'rows': 5})
-        }
         labels = {
             'text': "Intitulé de l'option :",
             'question': 'Question associée:',
@@ -166,7 +158,7 @@ class RawvoteForm(ModelForm):
 
 class Touralter(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    num = models.IntegerField()
     results = models.JSONField()
-    removed_option = models.ForeignKey(Option, on_delete=models.CASCADE)
+    num = models.IntegerField(blank=True, null=True)
+    removed_option = models.ForeignKey(Option, on_delete=models.CASCADE, blank=True, null=True)
     
