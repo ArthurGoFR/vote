@@ -42,7 +42,7 @@
 
 
 <div class="alert alert-primary mb-4">
-  {{ref.valid_rawvotes.count}} bulletins ont été retournés.
+  {{ref.valid_rawvotes.count}} bulletins ont été retournés, sur les {{ref.sent_rawvotes.count}} envoyés.
 </div>
 
 {% if not ref.status == "FINISHED" %}

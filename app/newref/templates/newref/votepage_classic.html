@@ -8,10 +8,14 @@
 Ne partagez pas cette URL : une personne en disposant pourrait modifier vos réponses. <br/>
 <strong>Les votes sont ouverts jusqu'au {{ref.end}} inclus</strong>
 </div>
+
+{% if ref.when == "after" %}<div class="mt-4">Les votes sont terminés, il n'est plus possible de voter.{% endif %}
+
+
 <h3 class="mt-4 mb-4">{{ref.text}}</h3>
 
 {% if rawvote.json %}
-<div id="alert_ok" class="alert alert-primary">
+<div id="alert_ok" class="alert alert-primary alertcustom">
   Vos réponses sont bien enregistrées.
 
   <button
@@ -66,12 +70,12 @@ Ne partagez pas cette URL : une personne en disposant pourrait modifier vos rép
 </div>
 
 {% else %}
-<div id="alert_empty" class="alert alert-secondary">
+<div id="alert_empty" class="alert alert-secondary alertcustom">
   Vous n'avez pas de réponses enregistrées.
 </div>
 {% endif %}
 
-<div id="alert_nok" class="alert alert-warning">
+<div id="alert_nok" class="alert alert-warning alertcustom">
   Attention, vos réponses ne sont pas enregistrées.
 </div>
 
@@ -89,6 +93,7 @@ Ne partagez pas cette URL : une personne en disposant pourrait modifier vos rép
     name="questionRadio{{question.id}}"
     class="custom-control-input"
     required
+    {% if ref.when == "after" %}disabled{% endif %}
   />
   <label class="custom-control-label" for="optionRadio{{option.id}}"
     >{{option.text}}</label
@@ -97,7 +102,7 @@ Ne partagez pas cette URL : une personne en disposant pourrait modifier vos rép
 
 {% endfor %} {% endfor %}
 
-<form method="post" action="{% url 'votepage' rawvote.code %}">
+<form method="post" action="{% url 'votepage' rawvote.code %}" {% if ref.when == "after" %}disabled{% endif %}>
   {% csrf_token %} {{form|crispy}}
   <button
     id="savebut"
@@ -120,6 +125,8 @@ Ne partagez pas cette URL : une personne en disposant pourrait modifier vos rép
   {% comment %} On cache certains trucs {% endcomment %}
   $('#alert_nok').hide();
   $("#spinner").hide();
+
+
   $("#savebut").click(function() {
   	$("#spinner").show();
   });
@@ -146,7 +153,7 @@ Ne partagez pas cette URL : une personne en disposant pourrait modifier vos rép
   	{% endfor %}
 
   	$('[name="json"]').val(JSON.stringify(json));
-  	$('.alert').hide();
+  	$('.alertcustom').hide();
   	$('#alert_nok').show();
   	$('#savebut').attr("class","btn btn-warning btn-lg mt-4")
   	$("#savebut").prop("disabled",false);

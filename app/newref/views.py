@@ -155,7 +155,6 @@ def voteadmin_votants(request, hash):
 
 				if re.search(regex, email):
 					rawvotes = Rawvote.objects.filter(ref = ref, email = email)
-
 					if rawvotes.count() == 0:
 						letters = string.ascii_lowercase
 						code = ''.join(random.choice(letters) for i in range(50))
@@ -249,17 +248,21 @@ def test_email_sending(request,hash):
 	
 	ref = Ref.objects.get(hash = hash)
 	if request.method=="POST":
-		backend = generate_backend(ref)
-		destinataires = []
-		destinataires.append(request.POST["email"])
-		email = EmailMessage(
-			subject='Décidons : Test de connexion réussi !', 
-			body="Vous avez correctement configuré la boite d'envoi.", 
-			from_email=ref.email_host_user, 
-			to=destinataires,
-            connection=backend
-			)
-		email.send()
+		try:
+			backend = generate_backend(ref)
+			destinataires = []
+			destinataires.append(request.POST["email"])
+			email = EmailMessage(
+				subject='Décidons : Test de connexion réussi !', 
+				body="Vous avez correctement configuré la boite d'envoi.", 
+				from_email=ref.email_host_user, 
+				to=destinataires,
+				connection=backend
+				)
+			email.send()
+		except:
+			print("DADA")
+			HttpResponse("Erreur d'envoi")
 	return HttpResponseRedirect(reverse('voteadmin_bulletins', args = (hash,)))		
 
 
@@ -300,7 +303,7 @@ def mail_bulletin(rawvote):
 #Pour envoyer tous les bulletins (et passer le ref en RUN)
 def send_bulletins(request, hash):
 	ref = Ref.objects.get(hash = hash)
-	rawvotes = Rawvote.objects.filter(ref = ref).exclude(email="test@exemple.fr")
+	rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr")
 	for rawvote in rawvotes:
 		mail_bulletin(rawvote)
 	ref.status = "RUN"
@@ -313,6 +316,7 @@ def votepage(request, code):
 	
 	rawvote = Rawvote.objects.get(code = code)
 	ref = rawvote.ref
+	ref.when = when_ref(ref)
 	ref.questions = Question.objects.filter(ref = ref)
 
 	if request.method=="POST":
@@ -347,25 +351,29 @@ def votedelete(request, code):
 	return HttpResponseRedirect(reverse('votepage', args = (code,)))
 
 
+#Où en est on par rapport à la date de vote
+def when_ref(ref):
+	today=datetime.date(datetime.today())
+	try:
+		if today<ref.start:
+			when = "before"
+		elif today<=ref.end:
+			when = "during"
+		else:
+			when = "after"
+	except:
+		when = "before"
+	return when
 
 #Pour gérer le dépouillement
 def voteadmin_depouillement(request, hash):
 	template = "newref/voteadmin_depouillement.html"
 	ref = Ref.objects.get(hash = hash)
-	
-	
-	today=datetime.date(datetime.today())
-	try:
-		if today<ref.start:
-			ref.when = "before"
-		elif today<=ref.end:
-			ref.when = "during"
-		else:
-			ref.when = "after"
-	except:
-		ref.when = "before"
-	
-	ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(json__isnull=False)
+	ref.when = when_ref(ref)
+
+	ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(json__isnull=False).exclude(email="test@exemple.fr")
+	ref.sent_rawvotes = Rawvote.objects.filter(ref=ref).exclude(status="INIT").exclude(email="test@exemple.fr")
+
 	context = {"ref":ref}
 	return render(request, template, context)
 
@@ -375,7 +383,7 @@ def voteadmin_depouillement_anticipe(request, hash):
 	
 	ref.when = "after"
 	
-	ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(json__isnull=False)
+	ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(json__isnull=False).exclude(email="test@exemple.fr")
 	context = {"ref":ref}
 	return render(request, template, context)
 
@@ -395,7 +403,7 @@ def ref_depouillement(request, hash):
 #Fonction qui calcul les résultats pour un vote classic
 def trait_classic(ref):
 	questions = Question.objects.filter(ref = ref)
-	valid_rawvotes = Rawvote.objects.filter(ref = ref).exclude(json__isnull=True)
+	valid_rawvotes = Rawvote.objects.filter(ref = ref).exclude(json__isnull=True).exclude(email="test@exemple.fr")
 	Touralter.objects.filter(question__in=questions).delete()
 
 	for question in questions:
@@ -414,7 +422,7 @@ def trait_classic(ref):
 #Fonction qui calcul les résultats pour un vote alternatif
 def trait_alter(ref):
 	questions = Question.objects.filter(ref = ref)
-	valid_rawvotes = Rawvote.objects.filter(ref = ref).exclude(json__isnull=True)
+	valid_rawvotes = Rawvote.objects.filter(ref = ref).exclude(json__isnull=True).exclude(email="test@exemple.fr")
 	Touralter.objects.filter(question__in=questions).delete()
 	
 	for question in questions:

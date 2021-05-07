@@ -2,6 +2,8 @@ from django.db import models
 from django.forms import ModelForm, Textarea, RadioSelect, HiddenInput, DateInput, SelectDateWidget
 from django import forms
 from django.conf import settings
+import datetime
+
 
 class DateInput(DateInput):
     input_type = 'date'
@@ -20,11 +22,11 @@ STATUS_CHOICES = [
 
 class Ref(models.Model):
     text = models.CharField(max_length=1000)
-    bulletin_text = models.CharField(max_length=1000, blank=True, null=True, default="Vous êtes invité.e à voter. Attention à ne pas partager ce bulletin : les personnes qui y accéderont pourront voter à votre place.")
-    bulletin_img = models.CharField(max_length=300, blank=True, null=True, default="https://www.batiactu.com/images/auto/620-465-c/20200311_170654_39186406illustration-wissanu99.jpg")
-    bulletin_objet = models.CharField(max_length=300, blank=True, null=True, default="Votre bulletin de vote")
-    start = models.DateField(blank=True, null=True)
-    end = models.DateField(blank=True, null=True)
+    bulletin_text = models.CharField(max_length=1000, default="Vous êtes invité.e à voter. Attention à ne pas partager ce bulletin : les personnes qui y accéderont pourront voter à votre place.")
+    bulletin_img = models.CharField(max_length=300, default="https://www.batiactu.com/images/auto/620-465-c/20200311_170654_39186406illustration-wissanu99.jpg")
+    bulletin_objet = models.CharField(max_length=300, default="Votre bulletin de vote")
+    start = models.DateField(blank=True, null=True, default=datetime.date.today())
+    end = models.DateField(blank=True, null=True, default=datetime.date.today()+datetime.timedelta(days=7))
     depouillement = models.CharField(max_length=10, choices=DEP_CHOICES, default="ALT")
     secret_key = models.CharField(max_length=100)
     hash = models.CharField(max_length=100)
@@ -42,14 +44,14 @@ class RefForm(ModelForm):
         widget=forms.DateInput(format='%Y-%m-%d',  attrs={'type': 'date'}),
         input_formats=('%Y-%m-%d', ),
         label="Quand commence la votation (début à 0:01)",
-        required=False
+        required=True
         )
 
     end = forms.DateField(
         widget=forms.DateInput(format='%Y-%m-%d',  attrs={'type': 'date',}),
         input_formats=('%Y-%m-%d', ),
         label="Quand se termine la votation (fin à 23:59) :",
-        required=False
+        required=True
         )
 
     class Meta:

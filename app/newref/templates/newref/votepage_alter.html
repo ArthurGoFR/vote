@@ -20,6 +20,9 @@
 	<strong>Les votes sont ouverts jusqu'au {{ref.end}} inclus</strong>
 </div>
 
+{% if ref.when == "after" %}<div class="mt-4">Les votes sont terminés, il n'est plus possible de voter.{% endif %}
+
+
 <h3 class="mt-4 mb-4">
 	{{ref.text}}
 </h3>
@@ -83,7 +86,7 @@
 
 {% endfor %}
 
-<form method="post" action="{% url 'votepage' rawvote.code %}">
+<form method="post" action="{% url 'votepage' rawvote.code %}" {% if ref.when == "after" %}disabled{% endif %} >
 	{% csrf_token %}
 	{{form|crispy}}
 	<button id ="savebut" type="submit" class="btn btn-outline-primary btn-lg mt-4" disabled>
@@ -116,9 +119,15 @@
 			order = {{question.order|safe}};
 			list{{question.id}}.sort(order);
 			lists[{{question.id}}] = list{{question.id}}
+			
+			{% comment %} Si le ref est terminé on disable {% endcomment %}
+			{% if ref.when == "after" %}
+				list{{question.id}}.option("disabled", true);
+			{% endif %}
+
 		{% endfor %}
 
-
+	
 		{% comment %} La fonction qui s'active à chaque changement d'odre {% endcomment %}
 		function getOrders() {
 			json = {};
@@ -135,6 +144,9 @@
 		$("#savebut").click(function() {
 			$("#spinner").show();
 		});
+
+
+
 	});
 
 </script>
