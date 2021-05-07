@@ -1,5 +1,6 @@
 app/venv
 app/enigma
-app/enigma3
+app/enigma3.py
+app/frenchwords.csv
 app/db.sqlite3
 app/testlog.log
