@@ -1,6 +1,5 @@
 {% extends 'newref/base.html' %} {% load static %} {% load crispy_forms_tags %}
-{% block head %} {% endblock %}
-{% block content %}
+{% block head %} {% endblock %} {% block content %}
 
 <nav aria-label="..." class="mb-5">
   <ul class="pagination">
@@ -34,20 +33,19 @@
 </nav>
 
 <div class="alert alert-info alert-dismissible fade show" role="alert">
-  Cette page permet de réaliser le dépouillement et de communiquer les résultats.
+  Cette page permet de réaliser le dépouillement et de communiquer les
+  résultats.
   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
     <span aria-hidden="true">&times;</span>
   </button>
 </div>
 
-
 <div class="alert alert-primary mb-4">
-  {{ref.valid_rawvotes.count}} bulletins ont été retournés, sur les {{ref.sent_rawvotes.count}} envoyés.
+  {{ref.valid_rawvotes.count}} bulletins ont été retournés, sur les
+  {{ref.sent_rawvotes.count}} envoyés.
 </div>
 
-{% if not ref.status == "FINISHED" %}
-
-  {% if ref.when == "after" %}
+{% if not ref.status == "FINISHED" %} {% if ref.when == "after" %}
 <button
   class="btn btn-primary mb-4"
   onclick="location.href ='{% url 'ref_depouillement' ref.hash %}'"
@@ -56,36 +54,35 @@
 </button>
 <div>
   {% else %}
-<div class="alert alert-warning">
-  Il faut attendre la fin des votes pour procéder au dépouillement. <br/>
-  Il est cependant possible de réaliser un
-  <a href="{% url 'voteadmin_depouillement_anticipe' ref.hash %}">
-    dépouillement anticipé
-  </a>
-</div>
+  <div class="alert alert-warning">
+    Il faut attendre la fin des votes pour procéder au dépouillement. <br />
+    Il est cependant possible de réaliser un
+    <a href="{% url 'voteadmin_depouillement_anticipe' ref.hash %}">
+      dépouillement anticipé
+    </a>
+  </div>
+  {% endif %} {% else %}
+  <div class="alert alert-primary">
+    Le dépouillement a été réalisé. Les résultats sont disponibles
+  </div>
+  {% endif %} {% if ref.status == "FINISHED" %}
+  <button
+    class="btn btn-primary mb-4"
+    onclick=" window.open('{% url 'ref_results' ref.id %}','_blank')"
+  >
+    Visualiser les résultats
+  </button>
   {% endif %}
 
-{% else %}
-<div class="alert alert-primary">Le dépouillement a été réalisé. Les résultats sont disponibles</div>
-{% endif %}
+  <div>
+    <button
+      class="btn btn-warning mb-4"
+      onclick=" window.open('{% url 'communicate_results' ref.hash %}')"
+      disabled
+    >
+      Communiquer les résultats
+    </button>
 
-
-{% if  ref.status == "FINISHED" %}
-<button
-  class="btn btn-primary mb-4"
-  onclick=" window.open('{% url 'ref_results' ref.id %}','_blank')"
->
-  Visualiser les résultats
-</button>
-{% endif %}
-
-<div>
-<button
-  class="btn btn-warning mb-4"
-  onclick=" window.open('{% url 'communicate_results' ref.hash %}')"
-  disabled
->
-  Communiquer les résultats
-</button>
-
-{% endblock %}
+    {% endblock %}
+  </div>
+</div>

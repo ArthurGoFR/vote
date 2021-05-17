@@ -1,7 +1,5 @@
-{% extends 'newref/base.html' %} 
-{% load static %} {% load crispy_forms_tags %}
-{% block head %} {% endblock %}
-{% block content %}
+{% extends 'newref/base.html' %} {% load static %} {% load crispy_forms_tags %}
+{% block head %} {% endblock %} {% block content %}
 
 <nav aria-label="..." class="mb-5">
   <ul class="pagination">
@@ -50,7 +48,13 @@
   {% csrf_token %} {{form | crispy}}
   <button id="savebut_1" type="submit" class="btn btn-primary">
     Ajouter une question
-    <span hidden id="spinner_1" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+    <span
+      hidden
+      id="spinner_1"
+      class="spinner-border spinner-border-sm"
+      role="status"
+      aria-hidden="true"
+    ></span>
   </button>
 </form>
 
@@ -60,7 +64,13 @@
   {% csrf_token %} {{optionForm | crispy}}
   <button id="savebut_2" type="submit" class="btn btn-primary">
     Ajouter une option
-    <span hidden id="spinner_2" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>    
+    <span
+      hidden
+      id="spinner_2"
+      class="spinner-border spinner-border-sm"
+      role="status"
+      aria-hidden="true"
+    ></span>
   </button>
 </form>
 
@@ -74,8 +84,8 @@
   <b
     >{{question.text}} {% if ref.status == "CONFIG" %}<a
       href="{% url 'delete_question' ref.hash question.id %}"
-      style="color: rgb(220,64,64)"
-      >(X)</a
+      style="color: rgb(220, 64, 64)"
+      ><img src="{% static 'newref/png/remove.png' %}" alt="(X)" /></a
     >{% endif %}
   </b>
 </div>
@@ -85,26 +95,24 @@
   <li class="list-group-item">
     {{option.text}} {% if ref.status == "CONFIG" %}<a
       href="{% url 'delete_option' ref.hash option.id %}"
-      style="color: rgb(220,64,64)"
-      >(X)</a
-    >
+      style="color: rgb(220, 64, 64)"
+      ><img src="{% static 'newref/png/remove.png' %}" alt="(X)"
+    /></a>
   </li>
   {% endif %} {% endfor %}
 </ul>
-{% endfor %} 
-
+{% endfor %}
 
 <script type="text/javascript">
-	$(document).ready(function () {
-    
-    {% comment %} $("#savebut_1").click(function() {
-			$("#spinner_1").removeAttr('hidden');
-		});
-    $("#savebut_2").click(function() {
-			$("#spinner_2").removeAttr('hidden');
-		}); {% endcomment %}
-  });
+  $(document).ready(function () {
+
+     {% comment %} $("#savebut_1").click(function() {
+  		$("#spinner_1").removeAttr('hidden');
+  	});
+     $("#savebut_2").click(function() {
+  		$("#spinner_2").removeAttr('hidden');
+  	}); {% endcomment %}
+   });
 </script>
 
 {% endblock %}
-

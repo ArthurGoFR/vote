@@ -36,28 +36,42 @@
   </button>
 </div>
 
-<div class="mt-4 mb-4 alert alert-success" id="alert-box">Tous les changements sont enregistrés</div>
+<div id="alert-box"></div>
 
 <form id="formRef" method="post" action="{% url 'voteadmin' ref.hash %}">
   <fieldset {% if not ref.status == "CONFIG" %}disabled="disabled"{% endif %}>
   {% csrf_token %}
    {{form | crispy}}
+   <button id="savebut" type="submit" class="btn btn-outline-primary">
+      Enregistrer
+    	<span hidden id="spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>  
+    </button>
   </fieldset>
 </form>
 
-<script type="module">
-import { autosaveForm } from '{% static 'newref/js/autosave.js' %}';
-
-
-$(document).ready(function () {
-
-    $("#alert-box").click(function(){
-       $("#formRef").each(function(){
-            console.log( $(this).find(':input').val()); //<-- Should return all input elements in that specific form.
-          });
-      })
+<script type="text/javascript">
+	$(document).ready(function () {
     
-    autosaveForm("formRef", $("#alert-box"));
+
+    $("form").bind("change paste keyup", function() {
+      $("#savebut").attr('class', 'btn btn-warning');
+    });
+
+    {% comment %} $("#savebut").click(function() {
+			$("#spinner").removeAttr('hidden');
+		}); {% endcomment %}
+
+
+    const alertBox = document.getElementById('alert-box');
+    const form = document.getElementById('formRef');
+
+    $("form").on( "submit", function( event ) {
+      event.preventDefault();
+      console.log( $( this ).serialize() );
+    });
+
+
+
   });
 </script>
 

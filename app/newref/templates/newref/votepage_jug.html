@@ -20,7 +20,7 @@ Ne partagez pas cette URL : une personne en disposant pourrait modifier vos rép
 
   <button
     type="button"
-    class="btn btn-outline-success"
+    class="btn btn-outline-primary"
     data-toggle="modal"
     data-target="#exampleModal"
   >
@@ -75,32 +75,35 @@ Ne partagez pas cette URL : une personne en disposant pourrait modifier vos rép
 </div>
 {% endif %}
 
-<div id="alert_nok" class="alert alert-warning alertcustom">
+<div id="alert_nok" class="alert alert-warning alertcustom" hidden>
   Attention, vos réponses ne sont pas enregistrées.
 </div>
 
 {% for question in ref.questions %}
-
-<h4 class="mt-4">{{question.text}}</h4>
-
-{% for option in question.options %}
-
-<div class="custom-control custom-radio">
-  <input
-    type="radio"
-    value="{{option.id}}"
-    id="optionRadio{{option.id}}"
-    name="questionRadio{{question.id}}"
-    class="custom-control-input"
-    required
-    {% if ref.when == "after" %}disabled{% endif %}
-  />
-  <label class="custom-control-label" for="optionRadio{{option.id}}"
-    >{{option.text}}</label
-  >
-</div>
-
-{% endfor %} {% endfor %}
+<hr>
+<h3 class="">{{question.text}}</h3>
+<hr class="mb-4">
+  {% for option in question.options %}
+  <h4 class="mt-4">{{option.text}}</h4>
+    {% for keyjug, jugoption in ref.jugoptions.items %}
+      <div class="custom-control custom-radio">
+        <input
+          type="radio"
+          value="{{keyjug}}"
+          id="{{option.id}}-{{keyjug}}"
+          name="optionRadio{{option.id}}"
+          class="custom-control-input"
+          required
+          {% if keyjug == ref.low_option %}checked{% endif%}
+          {% if ref.when == "after" %}disabled{% endif %}
+        />
+        <label class="custom-control-label" for="{{option.id}}-{{keyjug}}"
+          >{{jugoption}}</label
+        >
+      </div>
+    {% endfor %}
+  {% endfor %}
+{% endfor %}
 
 <form method="post" action="{% url 'votepage' rawvote.code %}" {% if ref.when == "after" %}disabled{% endif %}>
   {% csrf_token %} {{form|crispy}}
@@ -115,49 +118,48 @@ Ne partagez pas cette URL : une personne en disposant pourrait modifier vos rép
       class="spinner-border spinner-border-sm"
       role="status"
       aria-hidden="true"
+      hidden
     ></span>
     Enregistrer
   </button>
 </form>
 
 <script type="text/javascript">
+$(document).ready(function () {
+    {% comment %} On met un listener sur tous les forms{% endcomment %}
+    $('input[type=radio]').change(function() {
+      getOrders()
+    });
 
-  {% comment %} On cache certains trucs {% endcomment %}
-  $('#alert_nok').hide();
-  $("#spinner").hide();
+    $("#savebut").click(function() {
+      $("#spinner").attr("hidden", true);
+    });
 
+    {% comment %} Initiation {% endcomment %}    
+    var json_init = JSON.parse($('[name="json"]').val());
 
-  $("#savebut").click(function() {
-  	$("#spinner").show();
-  });
+    for (const key in json_init) {
+      console.log(key)
+      $("#"+key.toString()+"-"+json_init[key].toString()).prop('checked', true);
+    }
 
+    {% comment %} La fonction qui s'active à chaque changement d'odre {% endcomment %}
+    function getOrders() {
+      json = {};
 
-  {% comment %} Initiation {% endcomment %}
-  var json_init = JSON.parse($('[name="json"]').val());
-  for (const key in json_init) {
-  	$("#optionRadio"+json_init[key].toString()).prop('checked', true);
-  }
+      {% for question in ref.questions %}
+        {% for option in question.options %}
+        json[{{option.id}}]=$('input[name=optionRadio{{option.id}}]:checked').val()
+        {% endfor %}
+      {% endfor %}
 
-
-  {% comment %} On met un listener sur tous les forms{% endcomment %}
-  $('input[type=radio]').change(function() {
-  	getOrders()
-  });
-
-  {% comment %} La fonction qui s'active à chaque changement d'odre {% endcomment %}
-  function getOrders() {
-  	json = {};
-
-  	{% for question in ref.questions %}
-  		json[{{question.id}}]=$('input[name=questionRadio{{question.id}}]:checked').val()
-  	{% endfor %}
-
-  	$('[name="json"]').val(JSON.stringify(json));
-  	$('.alertcustom').hide();
-  	$('#alert_nok').show();
-  	$('#savebut').attr("class","btn btn-warning btn-lg mt-4")
-  	$("#savebut").prop("disabled",false);
-  };
+      $('[name="json"]').val(JSON.stringify(json));
+      $('.alertcustom').attr('hidden', true)
+      $('#alert_nok').attr('hidden', false)
+      $('#savebut').attr("class","btn btn-warning btn-lg mt-4")
+      $("#savebut").prop("disabled",false);
+    };
+});
 </script>
 
 {% endblock %}

@@ -9,8 +9,10 @@ class DateInput(DateInput):
     input_type = 'date'
 
 DEP_CHOICES = [
-    ('ALT', "Choix : Hiérarchisation des options (par Drag & Drop) - Comptabilisation : vote alternatif"),
+
     ('CLASSIC', "Choix : Sélection d'une option - Comptabilisation : Classique"),
+    ('ALT', "(En construction) Choix Hiérarchisation des options - Comptabilisation : vote alternatif"),
+    ('JUG', "(En construction) Jugement majoritaire "),
     ]
 
 STATUS_CHOICES = [
@@ -19,6 +21,7 @@ STATUS_CHOICES = [
     ('FINISHED', 'Les résultats sont disponibles'),
 ]
 
+jugoptions = {1:"Excellent", 2:"Bien", 3:"Bof", 4:"Nul", 5:"Rejet"}
 
 class Ref(models.Model):
     text = models.CharField(max_length=1000)
@@ -27,7 +30,8 @@ class Ref(models.Model):
     bulletin_objet = models.CharField(max_length=300, default="Votre bulletin de vote")
     start = models.DateField(blank=True, null=True, default=datetime.date.today())
     end = models.DateField(blank=True, null=True, default=datetime.date.today()+datetime.timedelta(days=7))
-    depouillement = models.CharField(max_length=10, choices=DEP_CHOICES, default="ALT")
+    depouillement = models.CharField(max_length=10, choices=DEP_CHOICES, default="CLASSIC")
+    jugoptions = models.JSONField(default=jugoptions)
     secret_key = models.CharField(max_length=100)
     hash = models.CharField(max_length=100)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="CONFIG")
@@ -40,12 +44,12 @@ class Ref(models.Model):
 
 class RefForm(ModelForm):
 
-    start = forms.DateField(
-        widget=forms.DateInput(format='%Y-%m-%d',  attrs={'type': 'date'}),
-        input_formats=('%Y-%m-%d', ),
-        label="Quand commence la votation (début à 0:01)",
-        required=True
-        )
+    # start = forms.DateField(
+    #     widget=forms.DateInput(format='%Y-%m-%d',  attrs={'type': 'date'}),
+    #     input_formats=('%Y-%m-%d', ),
+    #     label="Quand commence la votation (début à 0:01)",
+    #     required=True
+    #     )
 
     end = forms.DateField(
         widget=forms.DateInput(format='%Y-%m-%d',  attrs={'type': 'date',}),
@@ -56,7 +60,7 @@ class RefForm(ModelForm):
 
     class Meta:
         model = Ref
-        fields = ['text', 'start','end','depouillement']
+        fields = ['text','end','depouillement']
         widgets = {
             # 'start': DateInput(format=('%m/%d/%Y'), attrs={'class':'form-control', 'placeholder':'Select a date', 'type':'date'}),
             # 'end': DateInput(),
@@ -164,3 +168,6 @@ class Touralter(models.Model):
     num = models.IntegerField(blank=True, null=True)
     removed_option = models.ForeignKey(Option, on_delete=models.CASCADE, blank=True, null=True)
     
+class Tour(models.Model):
+    ref = models.ForeignKey(Ref, on_delete=models.CASCADE)
+    results = models.JSONField()

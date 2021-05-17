@@ -108,7 +108,8 @@
 		{% for question in ref.questions %}
 			{% comment %} Pour chaque question : on ajoute un objet sortable{% endcomment %}	
 			list = document.getElementById("q{{question.id}}")
-			list{{question.id}} = Sortable.create(list, { 
+			list{{question.id}} = Sortable.create(list, {
+				animation: 150,
 				dataIdAttr: 'id',
 				onUpdate: function (evt) {
 					getOrders();
@@ -128,7 +129,7 @@
 		{% endfor %}
 
 	
-		{% comment %} La fonction qui s'active à chaque changement d'odre {% endcomment %}
+		{% comment %} La fonction qui sactive à chaque changement d ordre {% endcomment %}
 		function getOrders() {
 			json = {};
 			for (const[key,value] of Object.entries(lists)) {
