@@ -32,7 +32,7 @@ class Ref(models.Model):
     end = models.DateField(blank=True, null=True, default=datetime.date.today()+datetime.timedelta(days=7))
     depouillement = models.CharField(max_length=10, choices=DEP_CHOICES, default="CLASSIC")
     jugoptions = models.JSONField(default=jugoptions)
-    secret_key = models.CharField(max_length=100)
+    secret_key = models.CharField(max_length=100, unique=True)
     hash = models.CharField(max_length=100)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="CONFIG")
 
