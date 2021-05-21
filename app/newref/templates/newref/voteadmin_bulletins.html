@@ -219,7 +219,7 @@ import { autosaveForm } from '{% static 'newref/js/autosave.js' %}';
       }
     }
 
-    $("#sendbut").click(function() {
+    $("#formFinal").on('submit', function(){
 			  $("#spinner_2").removeAttr('hidden');
 		});
 

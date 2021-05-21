@@ -4,3 +4,5 @@ app/enigma3.py
 app/frenchwords.csv
 app/db.sqlite3
 app/testlog.log
+app/mediafiles/*
+!app/mediafiles/.gitkeep
