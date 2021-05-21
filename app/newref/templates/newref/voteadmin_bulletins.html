@@ -12,6 +12,9 @@
 
 <nav aria-label="..." class="mb-5">
   <ul class="pagination">
+  {% if ref.crypted %}
+    <li class="page-item"><a class="page-link" href="{% url 'rsa_display' ref.hash %}">Confidentialité</a></li>
+{% endif %}
 
     <li class="page-item"><a class="page-link" href="{% url 'voteadmin' ref.hash %}">Configuration</a></li>
     <li class="page-item"><a class="page-link" href="{% url 'voteadmin_questions' ref.hash %}">Questions & Options</a></li>
@@ -73,10 +76,20 @@
 
 <form id="formTest" method="post" action="{% url 'test_email_sending' ref.hash %}">
   {% csrf_token %}
-   <input type="email" name="email" required>
-   <button id="testbut" type="submit" class="btn btn-primary ml-2">
-    Envoyer un mail de test à cette adresse
-    <span hidden id="spinner_3" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>     
+    <div class="form-group">
+      <label for="inputEmail">Adresse mail de test</label>
+      <input class="form-control" type="email" name="email" id="inputEmail" required>
+    </div>
+
+    {% if ref.crypted %}
+    <div class="form-group">
+      <label for="inputRSA">Votre clef privée (qui n'apparait qu'au démarrage)</label>
+      <input class="form-control" type="file" name="private_key" id="inputRSA" required>
+    </div>
+    {% endif %}
+      <button id="testbut" type="submit" class="btn btn-primary ml-2">
+        Envoyer un mail de test
+        <span hidden id="spinner_3" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>     
     </button>
 </form>
 <div id="testMailBox"></div>
@@ -108,23 +121,39 @@
           Attention : une fois les bulletins envoyés, vous ne pourrez plus modifier les paramètres de la votation. Vérifiez bien tous les champs avant d'envoyer les bulletins.
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
-          <button id="sendbut" type="button" class="btn btn-warning" 
-            onclick="location.href ='{% url 'send_bulletins' ref.hash %}'">
-            J'ai tout vérifié, allons-y !
-          	<span hidden id="spinner_2" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>     
-            </button>
+
+          <form id="formFinal" method="post" enctype='multipart/form-data' action="{% url 'send_bulletins' ref.hash %}">
+            {% csrf_token %}
+              {% if ref.crypted %}
+              <div class="form-group">
+                <label for="inputRSA2">Votre clef privée (qui n'apparait qu'au démarrage)</label>
+                <input class="form-control" type="file" name="private_key" id="inputRSA2" required>
+              </div>
+              {% endif %}
+                <button id="sendbut" type="submit" class="btn btn-danger">
+                  J'ai tout vérifié, allons-y !<span hidden id="spinner_2" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 
+                  <span hidden id="spinner_3" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>     
+              </button>
+          </form>
         </div>
       </div>
     </div>
   </div>
 
 {% elif ref.status == "RUN" %}
-      <button id="sendbut" type="button" class="btn btn-warning mt-4" 
-        onclick="location.href ='{% url 'send_bulletins' ref.hash %}'">
-        Retenter l'envoi pour les bulletins non envoyés
-      <span hidden id="spinner_2" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>     
-  </button>
+<form class="mt-4" id="formFinal" method="post" enctype='multipart/form-data' action="{% url 'send_bulletins' ref.hash %}">
+  {% csrf_token %}
+    {% if ref.crypted %}
+    <div class="form-group">
+      <label for="inputRSA2">Votre clef privée (qui n'apparait qu'au démarrage)</label>
+      <input class="form-control" type="file" name="private_key" id="inputRSA2" required>
+    </div>
+    {% endif %}
+      <button id="sendbut" type="submit" class="btn btn-warning">
+        Retenter l'envoi pour les bulletins non-envoyés<span hidden id="spinner_2" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 
+        <span hidden id="spinner_3" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>     
+    </button>
+</form>
 
 {% endif %}
 
@@ -149,12 +178,15 @@ import { autosaveForm } from '{% static 'newref/js/autosave.js' %}';
     var all_data;
 
     function sentTestMail() {
-      form = $("#formTest")
-      all_data = form.serialize();
+      var form = document.getElementById("formTest")
+      {% comment %} all_data = form.serialize(); {% endcomment %}
+      var formData = new FormData(form);
       $.ajax({
-        url: form.attr("action"),
+        url: $("#formTest").attr("action"),
         type: "POST",
-        data: all_data,
+        data: formData,
+        contentType: false,
+        processData: false,
         success: function (data) {
           $("#spinner_3").attr("hidden",true);
           $("#testbut").prop("disabled",false);
@@ -190,6 +222,14 @@ import { autosaveForm } from '{% static 'newref/js/autosave.js' %}';
     $("#sendbut").click(function() {
 			  $("#spinner_2").removeAttr('hidden');
 		});
+
+    {% if ref.crypted %}
+
+      document.getElementById("id_email_host_password").type = "password";
+      {% if ref.crypted_email_host_password %}
+          document.getElementById("id_email_host_password").value = "donotchange"
+      {% endif %}
+    {% endif %}
 
   });
 </script>

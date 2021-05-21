@@ -1,8 +1,11 @@
 from django.db import models
-from django.forms import ModelForm, Textarea, RadioSelect, HiddenInput, DateInput, SelectDateWidget
+from django.forms import ModelForm, Textarea, RadioSelect, HiddenInput, DateInput, SelectDateWidget, TimeInput
 from django import forms
 from django.conf import settings
 import datetime
+from django.utils import timezone
+
+from django.forms.fields import FileField
 
 
 class DateInput(DateInput):
@@ -30,11 +33,20 @@ class Ref(models.Model):
     bulletin_objet = models.CharField(max_length=300, default="Votre bulletin de vote")
     start = models.DateField(blank=True, null=True, default=datetime.date.today())
     end = models.DateField(blank=True, null=True, default=datetime.date.today()+datetime.timedelta(days=7))
+
+    start_time = models.TimeField(blank=True, null=True, default=datetime.datetime.now())
+    end_time = models.TimeField(blank=True, null=True, default= datetime.time(16, 00))
+
     depouillement = models.CharField(max_length=10, choices=DEP_CHOICES, default="CLASSIC")
     jugoptions = models.JSONField(default=jugoptions)
     secret_key = models.CharField(max_length=100, unique=True)
     hash = models.CharField(max_length=100)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="CONFIG")
+    
+    crypted = models.BooleanField(default=True)
+    public_key = models.FileField(upload_to='public_keys/', blank=True, null=True)
+    private_key = models.FileField(upload_to='private_keys/', blank=True, null=True)
+    crypted_email_host_password = models.BinaryField(max_length=3000, blank=True, null=True)
 
     email_use_tls = models.BooleanField(default=False)
     email_host = models.CharField(max_length=300, blank=True, null=True)
@@ -44,26 +56,40 @@ class Ref(models.Model):
 
 class RefForm(ModelForm):
 
-    # start = forms.DateField(
-    #     widget=forms.DateInput(format='%Y-%m-%d',  attrs={'type': 'date'}),
-    #     input_formats=('%Y-%m-%d', ),
-    #     label="Quand commence la votation (début à 0:01)",
-    #     required=True
-    #     )
+    start = forms.DateField(
+        widget=forms.DateInput(format='%Y-%m-%d',  attrs={'type': 'date'}),
+        input_formats=('%Y-%m-%d', ),
+        label="Quel jour commence la votation :",
+        required=True
+        )
+
+    start_time = forms.TimeField(
+        widget=forms.TimeInput(format='%H:%M',  attrs={'type': 'time'}),
+        # input_formats=('%Y-%m-%d', ),
+        label="A quelle heure :",
+        required=True
+        )
 
     end = forms.DateField(
         widget=forms.DateInput(format='%Y-%m-%d',  attrs={'type': 'date',}),
         input_formats=('%Y-%m-%d', ),
-        label="Quand se termine la votation (fin à 23:59) :",
+        label="Quelle jour se termine la votation :",
+        required=True
+        )
+
+    end_time = forms.TimeField(
+        widget=forms.TimeInput(format='%H:%M',  attrs={'type': 'time'}),
+        # input_formats=('%Y-%m-%d', ),
+        label="A quelle heure :",
         required=True
         )
 
     class Meta:
         model = Ref
-        fields = ['text','end','depouillement']
+        fields = ['text','start','start_time','end','end_time','depouillement']
         widgets = {
-            # 'start': DateInput(format=('%m/%d/%Y'), attrs={'class':'form-control', 'placeholder':'Select a date', 'type':'date'}),
-            # 'end': DateInput(),
+            # # 'start': DateInput(format=('%m/%d/%Y'), attrs={'class':'form-control', 'placeholder':'Select a date', 'type':'date'}),
+            # 'end_time': TimeInput(format='%H:%M'),
             # 'text':Textarea(attrs={'cols': 80, 'rows': 5})
     
         }
@@ -74,16 +100,15 @@ class RefForm(ModelForm):
         }
 
 
-
 class SmallRefForm(ModelForm):
     class Meta:
         model = Ref
-        fields = ['text','secret_key']
+        fields = ['text','secret_key','crypted']
 
         labels = {
             'text': 'Entrer un nom provisoire pour votre votation',
             'secret_key': "Entrer un code secret pour votre votation. Attention à ne pas le perdre, il sera nécessaire pour revenir à l'administration !",
-            # 'text': "Une question ? Un message ? (c'est optionnel)"
+            'crypted': "Encrypter les données sensibles (mot de passe de la boite mail d'envoi, bulletins envoyés) (recommandé) ?"
         }
 
 
@@ -101,7 +126,7 @@ class BulletinRefForm(ModelForm):
             'email_host_user': "Nom d'utilisateur",
             'email_host_password': "Mot de passe",
             'email_use_tls': "TLS",
-        }
+        }        
 
 
 class Question(models.Model):
@@ -152,6 +177,7 @@ class Rawvote(models.Model):
     code = models.CharField(max_length=100)
     status = models.CharField(max_length=10, choices=STAT_CHOICES, default="INIT")
     json = models.JSONField(max_length=1000, blank=True, null=True)
+    crypted_json = models.BinaryField(max_length=2000, blank=True, null=True)
 
     def __str__(self):
         return self.email

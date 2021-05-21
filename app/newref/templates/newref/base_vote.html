@@ -1,0 +1,111 @@
+{% extends 'newref/base.html' %} 
+{% load static %} 
+{% load crispy_forms_tags %}
+{% block head %}
+{% endblock %} 
+
+{% block content %}
+
+<div class="alert alert-info">Ceci est la page de vote de {{rawvote.email}}. <br/>
+Ne partagez pas cette URL : une personne en disposant pourrait modifier vos réponses. <br/>
+<strong>Les votes sont ouverts jusqu'au {{ref.end}} inclus</strong>
+</div>
+
+{% if ref.when == "before" %}
+    <div class="alert alert-warning mt-4">Les votes ne sont pas encore ouverts.</div>
+{% elif ref.when == "during" %}
+    <div class="alert alert-success mt-4">Les votes sont ouverts !</div>
+{% elif ref.when == "after" %}
+    <div class="alert alert-danger mt-4">Les votes sont fermés, il n'est plus possible de voter.</div>
+{% endif %}
+
+<h3 class="mt-4 mb-4">{{ref.text}}</h3>
+
+{% if rawvote.json or rawvote.crypted_json %}
+<div id="alert_ok" class="alert alert-success alertcustom">
+  Votre bulletin a bien été enregistré. Il est possible de modifier vos réponses jusqu'à la fermeture des votes.
+
+{% if ref.when == "during" %}
+  <button type="button" class="btn btn-outline-success" data-toggle="modal" data-target="#exampleModal" >
+    Effacer mes réponses
+  </button>
+{% endif%}
+</div>
+  <!-- Modal -->
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" >
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Confirmation</h5>
+          <button
+            type="button"
+            class="close"
+            data-dismiss="modal"
+            aria-label="Close"
+          >
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          Vous confirmez souhaiter effacer vos réponses ?
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-primary"
+            onclick="location.href = '{% url 'votedelete' rawvote.code %}';"
+          >
+            Oui
+          </button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Non
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+{% else %}
+<div id="alert_empty" class="alert alert-secondary alertcustom">
+  Vous n'avez pas de réponses enregistrées.
+</div>
+{% endif %}
+
+<div id="alert_nok" class="alert alert-warning alertcustom" hidden>
+  Attention, vos réponses ne sont pas enregistrées.
+</div>
+
+{% block specific_html %} {% endblock %}
+
+<form method="post" action="{% url 'votepage' rawvote.code %}">
+  {% csrf_token %} {{form|crispy}}
+  <button
+    id="savebut"
+    type="submit"
+    class="btn btn-outline-primary btn-lg mt-4"
+    disabled
+  >
+    <span
+      id="spinner"
+      class="spinner-border spinner-border-sm"
+      role="status"
+      aria-hidden="true"
+      hidden
+    ></span>
+    Enregistrer
+  </button>
+</form>
+
+
+{% block specific_js %} {% endblock %}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+        $("#savebut").click(function() {
+            $("#spinner").prop("hidden",false);
+        });
+    });
+</script>
+
+{% endblock %}

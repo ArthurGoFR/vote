@@ -3,6 +3,13 @@
 
 <nav aria-label="..." class="mb-5">
   <ul class="pagination">
+    {% if ref.crypted %}
+    <li class="page-item">
+      <a class="page-link" href="{% url 'rsa_display' ref.hash %}"
+        >Confidentialité</a
+      >
+    </li>
+    {% endif %}
     <li class="page-item">
       <a class="page-link" href="{% url 'voteadmin' ref.hash %}"
         >Configuration</a
@@ -46,43 +53,66 @@
 </div>
 
 {% if not ref.status == "FINISHED" %} {% if ref.when == "after" %}
+
+<form
+  id="formFinal"
+  method="post"
+  enctype="multipart/form-data"
+  action="{% url 'ref_depouillement' ref.hash %}"
+>
+  {% csrf_token %} {% if ref.crypted %}
+  <div class="form-group">
+    <label for="inputRSA2"
+      >Votre clef privée (qui n'apparait qu'au démarrage)</label
+    >
+    <input
+      class="form-control"
+      type="file"
+      name="private_key"
+      id="inputRSA2"
+      required
+    />
+  </div>
+  {% endif %}
+  <button id="sendbut" type="submit" class="btn btn-warning">
+    Procéder au dépouillement<span
+      hidden
+      id="spinner_2"
+      class="spinner-border spinner-border-sm"
+      role="status"
+      aria-hidden="true"
+    ></span>
+  </button>
+</form>
+
+{% else %}
+<div class="alert alert-warning">
+  Il faut attendre la fin des votes pour procéder au dépouillement. <br />
+  Il est cependant possible de réaliser un
+  <a href="{% url 'voteadmin_depouillement_anticipe' ref.hash %}">
+    dépouillement anticipé
+  </a>
+</div>
+{% endif %} {% else %}
+<div class="alert alert-primary">
+  Le dépouillement a été réalisé. Les résultats sont disponibles
+</div>
+{% endif %} {% if ref.status == "FINISHED" %}
 <button
   class="btn btn-primary mb-4"
-  onclick="location.href ='{% url 'ref_depouillement' ref.hash %}'"
+  onclick=" window.open('{% url 'ref_results' ref.id %}','_blank')"
 >
-  Procéder au dépouillement
+  Visualiser les résultats
 </button>
+{% endif %}
+
 <div>
-  {% else %}
-  <div class="alert alert-warning">
-    Il faut attendre la fin des votes pour procéder au dépouillement. <br />
-    Il est cependant possible de réaliser un
-    <a href="{% url 'voteadmin_depouillement_anticipe' ref.hash %}">
-      dépouillement anticipé
-    </a>
-  </div>
-  {% endif %} {% else %}
-  <div class="alert alert-primary">
-    Le dépouillement a été réalisé. Les résultats sont disponibles
-  </div>
-  {% endif %} {% if ref.status == "FINISHED" %}
   <button
-    class="btn btn-primary mb-4"
-    onclick=" window.open('{% url 'ref_results' ref.id %}','_blank')"
+    class="btn btn-warning mt-4 mb-4"
+    onclick=" window.open('{% url 'communicate_results' ref.hash %}')"
+    disabled
   >
-    Visualiser les résultats
+    Communiquer les résultats
   </button>
-  {% endif %}
-
-  <div>
-    <button
-      class="btn btn-warning mb-4"
-      onclick=" window.open('{% url 'communicate_results' ref.hash %}')"
-      disabled
-    >
-      Communiquer les résultats
-    </button>
-
-    {% endblock %}
-  </div>
 </div>
+{% endblock %}

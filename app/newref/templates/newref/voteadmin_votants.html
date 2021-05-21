@@ -3,6 +3,13 @@
 
 <nav aria-label="..." class="mb-5">
   <ul class="pagination">
+    {% if ref.crypted %}
+    <li class="page-item">
+      <a class="page-link" href="{% url 'rsa_display' ref.hash %}"
+        >Confidentialité</a
+      >
+    </li>
+    {% endif %}
     <li class="page-item">
       <a class="page-link" href="{% url 'voteadmin' ref.hash %}"
         >Configuration</a

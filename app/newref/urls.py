@@ -6,6 +6,8 @@ urlpatterns = [
 
     path('apropos/', views.apropos, name="apropos"),
     path('', views.refs, name='refs'),
+    path('rsa_display/<str:hash>', views.rsa_display, name='rsa_display'),
+    path('rsa_delete/<str:hash>', views.rsa_delete, name='rsa_delete'),
     path('secret_key_check/', views.secret_key_check, name='secret_key_check'),
 
     path('votepage/<str:code>', views.votepage, name='votepage'),
@@ -18,6 +20,7 @@ urlpatterns = [
     path('voteadmin_votants/<str:hash>', views.voteadmin_votants, name='voteadmin_votants'),
     path('delete_rawvote/<str:hash>/<int:id_rawvote>', views.delete_rawvote, name='delete_rawvote'), 
     path('voteadmin_bulletins/<str:hash>', views.voteadmin_bulletins, name='voteadmin_bulletins'),
+    
     # path('ref/send_bulletin_test/<str:hash>', views.send_bulletin_test, name='send_bulletin_test'),
 
     path('test_email_sending/<str:hash>', views.test_email_sending, name='test_email_sending'),

@@ -1,0 +1,93 @@
+{% extends 'newref/base.html' %} {% load static %} {% load crispy_forms_tags %}
+{% block head %} {% endblock %} {% block content %}
+
+<nav aria-label="..." class="mb-5">
+  <ul class="pagination">
+    <li class="page-item active" aria-current="page">
+      <span class="page-link">
+        Confidentialité
+        <span class="sr-only">(current)</span>
+      </span>
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="{% url 'voteadmin' ref.hash %}"
+        >Configuration</a
+      >
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="{% url 'voteadmin_questions' ref.hash %}"
+        >Questions & Options</a
+      >
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="{% url 'voteadmin_votants' ref.hash %}"
+        >Liste des votants</a
+      >
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="{% url 'voteadmin_bulletins' ref.hash %}"
+        >Envoi des bulletins</a
+      >
+    </li>
+    <li class="page-item">
+      <a class="page-link" href="{% url 'voteadmin_depouillement' ref.hash %}"
+        >Dépouillement</a
+      >
+    </li>
+  </ul>
+</nav>
+
+<div class="mb-4">
+  Vous avez choisi de crypter les données sensibles. Une clef vous sera demandée pour l'envoi des bulletins et le dépouillement. <br/>
+  <br/>
+  <strong style="color:red;">
+  Vous devez dans les plus brefs délais la télécharger puis
+  la supprimer du serveur pour que les administrateurs de Décidons ne puissent accéder aux données sensibles.</strong>
+</div>
+
+{% if ref.private_key %}
+<button
+  class="btn btn-primary"
+  onclick="window.location.href='{{ref.private_key.url}}'"
+>
+  1. Télécharger la clef depuis le serveur
+</button>
+
+
+
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-danger" data-toggle="modal" data-target="#exampleModal">
+   2. Supprimer la clef du serveur
+</button>
+
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Confirmation</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Avant de supprimer la clef du serveur, assurez vous de l'avoir téléchargée. Elle ne sera plus récupérable ensuite.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+        <button type="button" class="btn btn-danger" onclick="window.location.href='{% url 'rsa_delete' ref.hash %}'">Supprimer la clef</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+{% else %}
+
+<div class="alert alert-success">
+  La clef de votation a bien été supprimée du serveur, il n'est plus possible de
+  la récupérer ici. Vous en êtes l'unique possesseur.
+</div>
+{% endif %} {% endblock %}

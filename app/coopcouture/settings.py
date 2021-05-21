@@ -127,13 +127,13 @@ AUTHENTICATION_BACKENDS = (
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
-
 USE_I18N = True
 
 USE_L10N = True
 
 USE_TZ = True
+TIME_ZONE = "Europe/Paris"
+
 
 
 # Static files (CSS, JavaScript, Images)
@@ -148,7 +148,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR,'mediafiles')
 SITE_ID = 1
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
-
 
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED=True

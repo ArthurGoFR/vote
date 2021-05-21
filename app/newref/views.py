@@ -21,7 +21,8 @@ from django.urls import reverse
 from django.conf import settings
 from django.core import serializers
 import json
-
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
 
 def apropos(request):
 	return render(request,"newref/apropos.html")
@@ -52,6 +53,24 @@ def refs(request):
 			)
 			rawvote.save()
 
+			if ref.crypted:				
+				key = RSA.generate(2048)
+				private_key = key.export_key()
+				file_out = open("mediafiles/clef_votation_a_garder_precieusement_"+str(ref.id)+".pem", "wb")
+				file_out.write(private_key)
+				file_out.close()
+				ref.private_key = "clef_votation_a_garder_precieusement_"+str(ref.id)+".pem"
+				
+				public_key = key.publickey().export_key()
+				file_out = open("mediafiles/public_key_"+str(ref.id)+".pem", "wb")
+				file_out.write(public_key)
+				file_out.close()
+				ref.public_key = "public_key_"+str(ref.id)+".pem"
+				
+				ref.save()
+				
+				return HttpResponseRedirect(reverse('rsa_display', args = (ref.hash,)))
+
 			return HttpResponseRedirect(reverse('voteadmin', args = (ref.hash,)))
 	
 	refs = Ref.objects.all()
@@ -59,6 +78,18 @@ def refs(request):
 	
 	context= {"form":form,"refs":refs}
 	return render(request, template, context)
+
+def rsa_display(request, hash):
+	ref = Ref.objects.get(hash = hash)
+	template="newref/rsa_display.html"
+	context = {"ref":ref}
+	return render(request, template, context)
+
+def rsa_delete(request,hash):
+	ref = Ref.objects.get(hash=hash)
+	ref.private_key.delete()
+	ref.save()
+	return HttpResponseRedirect(reverse('rsa_display', args = (ref.hash,)))	
 
 #Pour accéder à l'admin d'un ref à partir d'une secret key
 def secret_key_check(request):
@@ -211,8 +242,32 @@ def voteadmin_bulletins(request, hash):
 
 	if request.method == "POST":
 		form = BulletinRefForm(request.POST, instance = ref)
-		if form.is_valid():
-			ref = form.save()
+		
+		#Pour les nons cryptés
+		if form.is_valid() and not ref.crypted:
+			ref.save()
+			return JsonResponse({'success': True})
+
+		#Pour les refs cryptés
+		if form.is_valid() and ref.crypted:
+			try:
+				crypted_password = ref.crypted_email_host_password
+			except:
+				crypted_password = None
+
+			ref.save()
+
+			ref.crypted_email_host_password = None
+			#Quand c'est la valeur par défaut qui est envoyée, remettre le vrai mot de passe
+			if ref.email_host_password == "donotchange":
+				ref.crypted_email_host_password = crypted_password
+			elif ref.email_host_password:
+				cipher = PKCS1_OAEP.new(RSA.importKey(ref.public_key.read()))
+				ref.crypted_email_host_password = cipher.encrypt(ref.email_host_password.encode("utf-8"))
+			#On efface le mot de passe en clair
+			ref.email_host_password = None
+			ref.save()  
+
 			return JsonResponse({'success': True})
 
 	form = BulletinRefForm(instance = ref)
@@ -225,11 +280,10 @@ def generate_html_bulletin(rawvote):
 	ref = rawvote.ref
 	abs_path = "http://"+settings.DOMAIN_NAME
 	htmly = get_template('newref/mail_base.html')
-	htmly = get_template('newref/mail_base.html')
 	text = ref.bulletin_text+"<br/><br/>"
 	try:
-		# text=text+"Début de la votation : le "+str(ref.start.strftime("%d/%m/%Y"))+" à 0:01<br/>"
-		text=text+"Fin de la votation : le "+str(ref.end.strftime("%d/%m/%Y"))+" à 23:59<br/>"
+		text=text+"Début de la votation : le "+str(ref.start.strftime("%d/%m/%Y"))+" à "+str(ref.start_time.strftime("%H:%M"))+"<br/>"
+		text=text+"Fin de la votation : le "+str(ref.end.strftime("%d/%m/%Y"))+" à "+str(ref.end_time.strftime("%H:%M"))+"<br/>"
 	except:
 		text=text+"Début de la votation : <br/>"
 		text=text+"Fin de la votation : "
@@ -245,12 +299,19 @@ def generate_html_bulletin(rawvote):
 	html = htmly.render(d)
 	return html
 
-def generate_backend(ref):
+def generate_backend(ref, private_key=None):
+	
+	if ref.crypted:
+		cipher = PKCS1_OAEP.new(RSA.importKey(private_key.read()))
+		password = cipher.decrypt(ref.crypted_email_host_password).decode("utf-8")
+	else:
+		password = ref.email_host_password
+
 	backend = EmailBackend(
 		host=ref.email_host, 
 		port=ref.email_port, 
 		username=ref.email_host_user, 
-		password=ref.email_host_password, 
+		password=password, 
 		use_tls=ref.email_use_tls, 
 		fail_silently=False
 		)
@@ -260,8 +321,12 @@ def generate_backend(ref):
 def test_email_sending(request,hash):
 	ref = Ref.objects.get(hash = hash)
 	if request.method=="POST":
+		
 		try:
-			backend = generate_backend(ref)
+			if ref.crypted:
+				backend = generate_backend(ref, request.FILES["private_key"])
+			else:
+				backend = generate_backend(ref)
 			destinataires = []
 			destinataires.append(request.POST["email"])
 			email = EmailMessage(
@@ -286,10 +351,10 @@ def preview_bulletin(request, hash):
 	return HttpResponse(html)
 
 #Pour envoyer un bulletin par mail
-def mail_bulletin(rawvote):
+def mail_bulletin(rawvote, backend, private_key=None):
 	
 	html = generate_html_bulletin(rawvote)
-	backend = generate_backend(rawvote.ref)
+	# backend = generate_backend(rawvote.ref)
 
 	subject = rawvote.ref.bulletin_objet
 	from_email = rawvote.ref.email_host_user
@@ -314,12 +379,19 @@ def mail_bulletin(rawvote):
 
 #Pour envoyer tous les bulletins (et passer le ref en RUN)
 def send_bulletins(request, hash):
-	ref = Ref.objects.get(hash = hash)
-	rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr")
-	for rawvote in rawvotes:
-		mail_bulletin(rawvote)
-	ref.status = "RUN"
-	ref.save()
+	if request.method=="POST":
+		ref = Ref.objects.get(hash = hash)
+		rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr")
+
+		if ref.crypted:
+			backend = generate_backend(ref, request.FILES["private_key"])
+		else:
+			backend = generate_backend(ref)
+		
+		for rawvote in rawvotes:
+			mail_bulletin(rawvote, backend)
+		ref.status = "RUN"
+		ref.save()
 	return HttpResponseRedirect(reverse('voteadmin_bulletins', args = (hash,)))
 
 
@@ -333,8 +405,13 @@ def votepage(request, code):
 
 	if request.method=="POST":
 		form = RawvoteForm(request.POST, instance=rawvote)
-		if form.is_valid() and ref.when != "after":
+		if form.is_valid() and ref.when == "during":
 			rawvote = form.save()
+			if ref.crypted:
+				cipher = PKCS1_OAEP.new(RSA.importKey(rawvote.ref.public_key.read()))
+				rawvote.crypted_json = cipher.encrypt(str(rawvote.json).encode("utf-8"))
+				rawvote.json=None
+				rawvote.save()
 
 	if ref.depouillement == "ALT":
 		template = "newref/votepage_alter.html"
@@ -365,17 +442,20 @@ def votedelete(request, code):
 
 	rawvote = Rawvote.objects.get(code = code)
 	rawvote.json = None
+	rawvote.crypted_json = None
 	rawvote.save()
 	return HttpResponseRedirect(reverse('votepage', args = (code,)))
 
 
 #Où en est on par rapport à la date de vote
 def when_ref(ref):
-	today=datetime.date(datetime.today())
+	now=datetime.now()
+	start=datetime.combine(ref.start, ref.start_time)
+	end=datetime.combine(ref.end, ref.end_time)
 	try:
-		if today<ref.start:
+		if now<start:
 			when = "before"
-		elif today<=ref.end:
+		elif now<end:
 			when = "during"
 		else:
 			when = "after"
@@ -389,8 +469,12 @@ def voteadmin_depouillement(request, hash):
 	ref = Ref.objects.get(hash = hash)
 	ref.when = when_ref(ref)
 
-	ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(json__isnull=False).exclude(email="test@exemple.fr")
-	ref.sent_rawvotes = Rawvote.objects.filter(ref=ref).exclude(status="INIT").exclude(email="test@exemple.fr")
+	if ref.crypted:
+		ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(crypted_json__isnull=False).exclude(email="test@exemple.fr")
+		ref.sent_rawvotes = Rawvote.objects.filter(ref=ref).exclude(status="INIT").exclude(email="test@exemple.fr")	
+	else:
+		ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(json__isnull=False).exclude(email="test@exemple.fr")
+		ref.sent_rawvotes = Rawvote.objects.filter(ref=ref).exclude(status="INIT").exclude(email="test@exemple.fr")
 
 	context = {"ref":ref}
 	return render(request, template, context)
@@ -401,46 +485,67 @@ def voteadmin_depouillement_anticipe(request, hash):
 	
 	ref.when = "after"
 	
-	ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(json__isnull=False).exclude(email="test@exemple.fr")
+	if ref.crypted:
+		ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(crypted_json__isnull=False).exclude(email="test@exemple.fr")
+		ref.sent_rawvotes = Rawvote.objects.filter(ref=ref).exclude(status="INIT").exclude(email="test@exemple.fr")	
+	else:
+		ref.valid_rawvotes = Rawvote.objects.filter(ref = ref).filter(json__isnull=False).exclude(email="test@exemple.fr")
+		ref.sent_rawvotes = Rawvote.objects.filter(ref=ref).exclude(status="INIT").exclude(email="test@exemple.fr")
+
 	context = {"ref":ref}
 	return render(request, template, context)
 
 
 #Ce qu'on envoie pour lancer le dépouillement
 def ref_depouillement(request, hash):
-	ref = Ref.objects.get(hash=hash)
-	if ref.depouillement == "ALT":
-		trait_alter(ref)
-	if ref.depouillement == "CLASSIC":
-		trait_classic(ref)
-	
-	ref.status="FINISHED"
-	ref.save()
+	if request.method=="POST":
+		ref = Ref.objects.get(hash=hash)
+		if ref.depouillement == "ALT":
+			trait_alter(ref)
+		if ref.depouillement == "CLASSIC":
+			if ref.crypted:
+				trait_classic(ref, request.FILES["private_key"])
+			else:
+				trait_classic(ref)
+		
+		ref.status="FINISHED"
+		ref.save()
 	return HttpResponseRedirect(reverse('voteadmin_depouillement', args = (hash,)))
 
 #Fonction qui calcul les résultats pour un vote classic
-def trait_classic(ref):
+def trait_classic(ref, private_key=None):
 	
-	valid_rawvotes = Rawvote.objects.filter(ref = ref).exclude(json__isnull=True).exclude(email="test@exemple.fr")
+	if ref.crypted:
+		valid_rawvotes = Rawvote.objects.filter(ref = ref).exclude(crypted_json__isnull=True).exclude(email="test@exemple.fr")
+	else:
+		valid_rawvotes = Rawvote.objects.filter(ref = ref).exclude(json__isnull=True).exclude(email="test@exemple.fr")
+	
 	Tour.objects.filter(ref=ref).delete()
 	tour = Tour()
 	tour.ref = ref
 	results = {}
 
-	#Initiatialisation du dictionnaire
+	#Initialisation du dictionnaire
 	questions = Question.objects.filter(ref = ref)
 	for question in questions:
 		options = Option.objects.filter(question = question)
 		for option in options:
 			results[option.id] = 0
 	
-	print(results)
 	#Remplissage du dictionnaire
-	for valid_rawvote in valid_rawvotes:
-		for ques_id,opt_id in valid_rawvote.json.items():
-			results[int(opt_id)] = results[int(opt_id)] + 1
-	print(results)
+	if ref.crypted:
+		cipher = PKCS1_OAEP.new(RSA.importKey(private_key.read()))
 
+	for valid_rawvote in valid_rawvotes:
+		if ref.crypted:	
+			string_json = cipher.decrypt(valid_rawvote.crypted_json).decode("utf-8")
+			decrypted_json = eval(string_json)
+			for ques_id,opt_id in decrypted_json.items():
+				results[int(opt_id)] = results[int(opt_id)] + 1		
+		else:
+			for ques_id,opt_id in valid_rawvote.json.items():
+				results[int(opt_id)] = results[int(opt_id)] + 1
+	
 	tour.results= results
 	tour.save()
 
