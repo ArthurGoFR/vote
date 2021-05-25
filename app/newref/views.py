@@ -381,13 +381,15 @@ def mail_bulletin(rawvote, backend, private_key=None):
 def send_bulletins(request, hash):
 	if request.method=="POST":
 		ref = Ref.objects.get(hash = hash)
-		rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr")
-
 		if ref.crypted:
-			backend = generate_backend(ref, request.FILES["private_key"])
+			if ref.crypted_email_host_password:
+				backend = generate_backend(ref, request.FILES["private_key"])
+			else:
+				return HttpResponseRedirect(reverse('voteadmin_bulletins', args = (hash,)))
 		else:
 			backend = generate_backend(ref)
-		
+
+		rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr")			
 		for rawvote in rawvotes:
 			mail_bulletin(rawvote, backend)
 		ref.status = "RUN"
