@@ -5,7 +5,7 @@ from . import views
 urlpatterns = [
 
     path('apropos/', views.apropos, name="apropos"),
-    path('', views.refs, name='refs'),
+    path('votations', views.refs, name='refs'),
     path('rsa_display/<str:hash>', views.rsa_display, name='rsa_display'),
     path('rsa_delete/<str:hash>', views.rsa_delete, name='rsa_delete'),
     path('secret_key_check/', views.secret_key_check, name='secret_key_check'),
