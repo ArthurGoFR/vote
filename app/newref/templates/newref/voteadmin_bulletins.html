@@ -39,19 +39,10 @@
 
 
 {% if not ref.status == "CONFIG" %}
-  <div class="alert alert-primary mt-4">
+  <div class="alert alert-warning mt-4">
     {{ref.sent_rawvotes.count}} bulletins ont été envoyés. {{ref.unsent_rawvotes.count}} n'ont pas été envoyés.<br/>
     <br/>
-
-      <strong>Bulletins non-envoyés :<br /></strong>
-      {% for rawvote in ref.unsent_rawvotes %}
-        {{rawvote.email}}<br/>
-      {% endfor %}
-      <br />
-      <strong>Bulletins envoyés :<br/></strong>
-      {% for rawvote in ref.sent_rawvotes %}
-        {{rawvote.email}}<br/>
-      {% endfor %}
+    Le détail des bulletins envoyés et non-envoyé est visible dans l'onglet "Liste des votants". Il est possible de renvoyer certains bulletins manuellement en modifiant leur statut dans cette même page.
   </div>
 
   <hr>

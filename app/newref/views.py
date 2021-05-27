@@ -1,6 +1,6 @@
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
-from .models import Ref, Question, QuestionForm, Option, OptionForm, Rawvote, RawvoteForm, Touralter, Tour, RefForm, SmallRefForm, BulletinRefForm
+from .models import Ref, Question, QuestionForm, Option, OptionForm, OptionFormSimple, Rawvote, RawvoteForm, Touralter, Tour, RefForm, SmallRefForm, BulletinRefForm
 from django.forms import modelformset_factory
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -137,20 +137,26 @@ def voteadmin_questions(request, hash):
 	if request.method == "POST":
 		try:
 			form = OptionForm(ref, request.POST)
-			option = form.save()
+			option = form.save(commit=False)
+			other_options_count = Option.objects.filter(question=option.question).count()
+			option.order = other_options_count+1
+			option.save()
 		except:
 			form = QuestionForm(request.POST)
 			question = form.save(commit=False)
 			question.ref = ref
+			other_questions_count = Question.objects.filter(ref=ref).count()
+			question.order = other_questions_count+1
 			question.save()
 
-	ref.questions = Question.objects.filter(ref=ref)
+	ref.questions = Question.objects.filter(ref=ref).order_by('order')
 	for question in ref.questions:
-		question.options = Option.objects.filter(question = question)
+		question.options = Option.objects.filter(question = question).order_by('order')
 
 	form = QuestionForm()
-
 	optionForm = OptionForm(ref)
+
+	ref.testvote = Rawvote.objects.filter(ref=ref).filter(email="test@exemple.fr").first()
 
 	context = {"ref":ref, "form":form, "optionForm":optionForm}
 	return render(request, template, context)
@@ -159,15 +165,78 @@ def voteadmin_questions(request, hash):
 def delete_question(request, hash, id_question):
 	question = Question.objects.get(id = id_question)
 	if question.ref.hash == hash:
+		questions_after = Question.objects.filter(ref=question.ref).filter(order__gt = question.order)
+		for question_after in questions_after:
+			question_after.order = question_after.order - 1
+			question_after.save()
 		question.delete()
+		return HttpResponseRedirect(reverse('voteadmin_questions', args = (hash,)))
+
+#Pour moveup une question
+def moveup_question(request, hash, id_question):
+	question = Question.objects.get(id = id_question)
+	if question.ref.hash == hash:
+		if question.order > 1:
+			other_question = Question.objects.filter(ref=question.ref).filter(order=question.order-1).first()
+			other_question.order=other_question.order+1
+			question.order = question.order-1
+			other_question.save()
+			question.save()
+		return HttpResponseRedirect(reverse('voteadmin_questions', args = (hash,)))
+
+#Pour moveup une option
+def moveup_option(request, hash, id_option):
+	option = Option.objects.get(id = id_option)
+	if option.question.ref.hash == hash:
+		if option.order > 1:
+			other_option = Option.objects.filter(question=option.question).filter(order=option.order-1).first()
+			other_option.order=other_option.order+1
+			option.order = option.order-1
+			other_option.save()
+			option.save()
 		return HttpResponseRedirect(reverse('voteadmin_questions', args = (hash,)))
 
 #Pour delete une option
 def delete_option(request, hash, id_option):
 	option = Option.objects.get(id = id_option)
 	if option.question.ref.hash == hash:
+		options_after = Option.objects.filter(order__gt = option.order).filter(question = option.question)
+		for option_after in options_after:
+			option_after.order = option_after.order - 1
+			option_after.save()
 		option.delete()
 		return HttpResponseRedirect(reverse('voteadmin_questions', args = (hash,)))
+
+#Pour edit une question
+def edit_question(request, hash, id_question):
+	question = Question.objects.get(id = id_question)
+	if question.ref.hash == hash:
+		if request.method == "POST":
+			form = QuestionForm(request.POST, instance=question)
+			if form.is_valid():
+				form.save()
+			return HttpResponseRedirect(reverse('voteadmin_questions', args = (hash,)))
+	
+		form = QuestionForm(instance = question)
+		template = "newref/edit_question.html"
+		context = {"question":question,"form":form}	
+		return render(request, template, context)
+
+#Pour moveup une option
+def edit_option(request, hash, id_option):
+	option = Option.objects.get(id = id_option)
+	if option.question.ref.hash == hash:
+		if request.method == "POST":
+			form = OptionFormSimple(request.POST, instance=option)
+			if form.is_valid():
+				form.save()
+			return HttpResponseRedirect(reverse('voteadmin_questions', args = (hash,)))
+	
+		
+		form = OptionFormSimple(instance = option)
+		template = "newref/edit_option.html"
+		context = {"option":option,"form":form}	
+		return render(request, template, context)
 
 #La page de config des votants pour un ref
 def voteadmin_votants(request, hash):
@@ -396,6 +465,13 @@ def send_bulletins(request, hash):
 		ref.save()
 	return HttpResponseRedirect(reverse('voteadmin_bulletins', args = (hash,)))
 
+def not_received_bul(request, hash, id_rawvote):
+	ref = Ref.objects.get(hash=hash)
+	rawvote = Rawvote.objects.get(id=id_rawvote)
+	if rawvote.ref == ref:
+		rawvote.status = "INIT"
+		rawvote.save()
+	return HttpResponseRedirect(reverse('voteadmin_votants', args = (rawvote.ref.hash,)))
 
 #Page de vote
 def votepage(request, code):
@@ -403,7 +479,7 @@ def votepage(request, code):
 	rawvote = Rawvote.objects.get(code = code)
 	ref = rawvote.ref
 	ref.when = when_ref(ref)
-	ref.questions = Question.objects.filter(ref = ref)
+	ref.questions = Question.objects.filter(ref = ref).order_by('order')
 
 	if request.method=="POST":
 		form = RawvoteForm(request.POST, instance=rawvote)
@@ -427,7 +503,7 @@ def votepage(request, code):
 	elif ref.depouillement == "CLASSIC":
 		template = "newref/votepage_classic.html"
 		for question in ref.questions:
-			question.options = Option.objects.filter(question = question)
+			question.options = Option.objects.filter(question = question).order_by('order')
 
 	elif ref.depouillement == "JUG":
 		template = "newref/votepage_jug.html"

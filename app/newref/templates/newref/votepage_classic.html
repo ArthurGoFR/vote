@@ -4,8 +4,9 @@
 
 {% block specific_html %} 
 {% for question in ref.questions %}
-
-<h4 class="mt-4">{{question.text}}</h4>
+<hr>
+{% if question.explanation%}<p class="mt-4">{{question.explanation|linebreaks}}</p>{% endif %}
+<div class="mt-4"><strong>Question {{question.order}} : {{question.text|linebreaks}}</strong></div>
 
 {% for option in question.options %}
 
@@ -14,7 +15,7 @@
   value="{{option.id}}" id="optionRadio{{option.id}}"
   name="questionRadio{{question.id}}" class="custom-control-input" required />
   <label class="custom-control-label" for="optionRadio{{option.id}}"
-    >{{option.text}}</label
+    >{{option.text|linebreaks}}</label
   >
 </div>
 

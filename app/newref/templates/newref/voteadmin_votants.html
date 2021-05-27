@@ -86,17 +86,38 @@
 
 <h3 class="mt-4 mb-4">La liste des votants ({{ref.rawvotes.count}})</h3>
 
-<ul class="list-group">
-  {% for rawvote in ref.rawvotes %}
-  <li class="list-group-item">
-    {{rawvote.email}} {% if ref.status == "CONFIG" %}<a
-      href="{% url 'delete_rawvote' ref.hash rawvote.id %}"
-      style="color: red"
-      ><img src="{% static 'newref/png/remove.png' %}" alt="(X)" /></a
-    >{% endif %}
-  </li>
-  {% endfor %}
-</ul>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Votant.e</th>
+      <th scope="col">Statut</th>
+      <th scope="col"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for rawvote in ref.rawvotes %}
+    <tr>
+      <th scope="row">{{ rawvote.email }}</th>
+      <td>{{rawvote.get_status_display }}</td>
+      <td>
+    {% if rawvote.status == "SENT" %}
+      <button class="btn btn-primary"
+        onclick="window.location.href='{% url 'not_received_bul' ref.hash rawvote.id %}'"
+        >Non reçu ?</button></td>
+    {% elif rawvote.status == "INIT" and ref.status == "CONFIG" %}
+      <a
+        href="{% url 'delete_rawvote' ref.hash rawvote.id %}"
+        style="color: red"
+        ><img src="{% static 'newref/png/remove.png' %}" alt="(X)" /></a
+      >
+    {% endif %}
+  </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+
 
 <script type="text/javascript">
   $(document).ready(function () {

@@ -24,6 +24,7 @@ STATUS_CHOICES = [
     ('FINISHED', 'Les résultats sont disponibles'),
 ]
 
+
 jugoptions = {1:"Excellent", 2:"Bien", 3:"Bof", 4:"Nul", 5:"Rejet"}
 
 class Ref(models.Model):
@@ -52,7 +53,7 @@ class Ref(models.Model):
     email_host = models.CharField(max_length=300, blank=True, null=True)
     email_host_user = models.CharField(max_length=100, blank=True, null=True)
     email_host_password = models.CharField(max_length=100, blank=True, null=True)
-    email_port = models.IntegerField(max_length=300, blank=True, null=True)
+    email_port = models.IntegerField(blank=True, null=True)
 
 class RefForm(ModelForm):
 
@@ -131,7 +132,12 @@ class BulletinRefForm(ModelForm):
 
 class Question(models.Model):
     text = models.CharField(max_length=1000)
+    explanation = models.CharField(max_length=1000, blank=True, null=True)
     ref =  models.ForeignKey(Ref, on_delete=models.CASCADE)
+    order= models.IntegerField()
+
+    class Meta:
+        ordering = ["order"]
 
     def __str__(self):
         return self.text
@@ -139,17 +145,24 @@ class Question(models.Model):
 class QuestionForm(ModelForm):
     class Meta:
         model = Question
-        fields = ['text']
+        fields = ['explanation','text']
 
         widgets = {
+            'explanation':Textarea(attrs={'cols': 80, 'rows': 5}),
+            'text':Textarea(attrs={'cols': 80, 'rows': 5}),
         }
         labels = {
             'text': 'Intitulé de la question :',
+            'explanation': 'Texte introductif :',
         }
 
 class Option(models.Model):
     text = models.CharField(max_length=1000)
     question =  models.ForeignKey(Question, on_delete=models.CASCADE)
+    order= models.IntegerField()
+    
+    class Meta:
+        ordering = ["order"]
 
 class OptionForm(ModelForm):
     class Meta:
@@ -161,12 +174,27 @@ class OptionForm(ModelForm):
             'question': 'Question associée:',
         }
 
+        widgets = {
+            'text':Textarea(attrs={'cols': 80, 'rows': 5})
+        }
+
     def __init__(self, ref, *args, **kwargs):
         super(OptionForm, self).__init__(*args, **kwargs)
         self.fields['question'].queryset = Question.objects.filter(ref=ref)
 
+class OptionFormSimple(ModelForm):
+    class Meta:
+        model = Option
+        fields = ['text']
+        labels = {
+            'text': "Intitulé de l'option :",
+        }
+        widgets = {
+            'text':Textarea(attrs={'cols': 80, 'rows': 5})
+        }
+
 STAT_CHOICES = [
-    ('INIT', "Statut initial"),
+    ('INIT', "Bulletin non envoyé"),
     ('SENT', "Bulletin envoyé"),
     ('STUCK', "Vote arrêté")
     ]

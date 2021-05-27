@@ -84,31 +84,63 @@
 {% endif %}
 
 <hr />
-<h3 class="mb-3">Questions & Options</h3>
+<h3 class="mb-3">Questions & Options <button class="btn btn-primary" onclick=" window.open('{% url 'votepage' ref.testvote.code %}','_blank')">Prévisualiser la page de vote</button> </h3>
 
-{% for question in ref.questions %}
-<div class="mb-3 mt-3">
-  <b
-    >{{question.text}} {% if ref.status == "CONFIG" %}<a
-      href="{% url 'delete_question' ref.hash question.id %}"
-      style="color: rgb(220, 64, 64)"
-      ><img src="{% static 'newref/png/remove.png' %}" alt="(X)" /></a
-    >{% endif %}
-  </b>
-</div>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Numéro</th>
+      <th scope="col">Intitulé</th>
+      <th scope="col">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for question in ref.questions %}
+    <tr class="table-success">
+      <th scope="row">Question {{question.order}}</th>
+      <td>
+        {% if question.explanation %}{{question.explanation|linebreaks}}{% endif %}
+        <strong>{{question.text|linebreaks}}</strong></td>
+      <td>
+          {% if ref.status == "CONFIG" %}
+            <button class="btn btn-danger" 
+              onclick="window.location.href='{% url 'delete_question' ref.hash question.id %}'"
+            >Supprimer</button>
+            <button class="btn btn-primary" 
+              onclick="window.location.href='{% url 'edit_question' ref.hash question.id %}'"
+            >Modifier</button>
+            {% if not forloop.counter == 1 %}<button class="btn btn-success" 
+            onclick="window.location.href='{% url 'moveup_question' ref.hash question.id %}'"
+          >Monter</button>{% endif %}
+          {% endif %}
+        </td>
+    </tr>
 
-<ul class="list-group">
-  {% for option in question.options %}
-  <li class="list-group-item">
-    {{option.text}} {% if ref.status == "CONFIG" %}<a
-      href="{% url 'delete_option' ref.hash option.id %}"
-      style="color: rgb(220, 64, 64)"
-      ><img src="{% static 'newref/png/remove.png' %}" alt="(X)"
-    /></a>
-  </li>
-  {% endif %} {% endfor %}
-</ul>
-{% endfor %}
+      {% for option in question.options %}
+    <tr>
+      <th scope="row">Option {{option.order}}</th>
+      <td>{{option.text|linebreaks}}</td>
+      <td>
+        {% if ref.status == "CONFIG" %}
+          <button class="btn btn-danger" 
+          onclick="window.location.href='{% url 'delete_option' ref.hash option.id %}'"
+          >Supprimer</button>
+          <button class="btn btn-primary" 
+          onclick="window.location.href='{% url 'edit_option' ref.hash option.id %}'"
+          >Modifier</button>
+          {% if not forloop.counter == 1 %}<button class="btn btn-success" 
+          onclick="window.location.href='{% url 'moveup_option' ref.hash option.id %}'"
+          >Monter</button>{% endif %}
+
+        {% endif %}
+        </td>
+    </tr>        
+      {% endfor %}
+    {% endfor %}
+
+  </tbody>
+</table>
+
 
 <script type="text/javascript">
   $(document).ready(function () {
