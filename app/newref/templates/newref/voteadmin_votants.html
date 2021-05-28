@@ -107,10 +107,10 @@ onclick = "window.location.href='{% url 'delete_all_rawvotes' ref.hash %}';">
       <th scope="row">{{ rawvote.email }}</th>
       <td>{{rawvote.get_status_display }}</td>
       <td>
-    {% if rawvote.status == "SENT" %}
+    {% if not rawvote.status == "INIT" %}
       <button class="btn btn-primary"
         onclick="window.location.href='{% url 'not_received_bul' ref.hash rawvote.id %}'"
-        >Non reçu ?</button></td>
+        >Passer en "non-envoyé"</button></td>
     {% elif rawvote.status == "INIT" and ref.status == "CONFIG" %}
       <a
         href="{% url 'delete_rawvote' ref.hash rawvote.id %}"

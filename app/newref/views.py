@@ -432,12 +432,11 @@ def preview_bulletin(request, hash):
 def mail_bulletin(rawvote, backend, private_key=None):
 	
 	html = generate_html_bulletin(rawvote)
-	# backend = generate_backend(rawvote.ref)
 
 	subject = rawvote.ref.bulletin_objet
 	from_email = rawvote.ref.email_host_user
 	destinataires = [rawvote.email]
-	text_content = 'Les informations sont dans la version HTML'
+	text_content = 'Le bulletin est en version HTML. Il faut ouvrir ce mail avec une messagerie qui supporte le HTML pour y accéder.'
 	html_content = html
 
 	msg = EmailMultiAlternatives(
@@ -452,9 +451,12 @@ def mail_bulletin(rawvote, backend, private_key=None):
 		msg.send()
 		rawvote.status="SENT"
 		rawvote.save()
+		success = True
 	except:
 		rawvote.status="FAIL"
 		rawvote.save()
+		success = False
+	return success
 
 #Pour envoyer tous les bulletins (et passer le ref en RUN)
 def send_bulletins(request, hash):
@@ -468,17 +470,13 @@ def send_bulletins(request, hash):
 		else:
 			backend = generate_backend(ref)
 
-		print("sélection des rawvotes")
-		rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr")			
-		print("Envoi...")
+		rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr").order_by('email')			
+		
+		success=True
 		for rawvote in rawvotes:
-			try:
-				mail_bulletin(rawvote, backend)
-				time.sleep(0.3)
-			except:
-				print("échec : "+str(rawvote.email))
-			
-		# mail_bulletin(rawvotes[0], backend)
+			if success:
+				success = mail_bulletin(rawvote, backend)
+	
 		ref.status = "RUN"
 		ref.save()
 	return HttpResponseRedirect(reverse('voteadmin_bulletins', args = (hash,)))
