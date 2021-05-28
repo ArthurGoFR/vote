@@ -18,7 +18,7 @@
 
     <li class="page-item"><a class="page-link" href="{% url 'voteadmin' ref.hash %}">Configuration</a></li>
     <li class="page-item"><a class="page-link" href="{% url 'voteadmin_questions' ref.hash %}">Questions & Options</a></li>
-    <li class="page-item"><a class="page-link" href="{% url 'voteadmin_votants' ref.hash %}">Liste des votants</a></li>
+    <li class="page-item"><a class="page-link" href="{% url 'voteadmin_votants' ref.hash %}">Liste des votant.e.s</a></li>
     <li class="page-item active" aria-current="page">
       <span class="page-link">
         Envoi des bulletins
@@ -42,7 +42,7 @@
   <div class="alert alert-warning mt-4">
     {{ref.sent_rawvotes.count}} bulletins ont été envoyés. {{ref.unsent_rawvotes.count}} n'ont pas été envoyés.<br/>
     <br/>
-    Le détail des bulletins envoyés et non-envoyé est visible dans l'onglet "Liste des votants". Il est possible de renvoyer certains bulletins manuellement en modifiant leur statut dans cette même page.
+    Le détail des bulletins envoyés et non-envoyé est visible dans l'onglet "Liste des votant.e.s". Il est possible de renvoyer certains bulletins manuellement en modifiant leur statut dans cette même page.
   </div>
 
   <hr>

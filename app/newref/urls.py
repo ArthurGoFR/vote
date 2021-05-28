@@ -24,6 +24,9 @@ urlpatterns = [
 
     path('voteadmin_votants/<str:hash>', views.voteadmin_votants, name='voteadmin_votants'),
     path('delete_rawvote/<str:hash>/<int:id_rawvote>', views.delete_rawvote, name='delete_rawvote'), 
+    path('delete_all_rawvotes/<str:hash>', views.delete_all_rawvotes, name='delete_all_rawvotes'), 
+
+
     path('voteadmin_bulletins/<str:hash>', views.voteadmin_bulletins, name='voteadmin_bulletins'),
     
     # path('ref/send_bulletin_test/<str:hash>', views.send_bulletin_test, name='send_bulletin_test'),

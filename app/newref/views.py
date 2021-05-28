@@ -156,7 +156,7 @@ def voteadmin_questions(request, hash):
 	form = QuestionForm()
 	optionForm = OptionForm(ref)
 
-	ref.testvote = Rawvote.objects.filter(ref=ref).filter(email="test@exemple.fr").first()
+	ref.testvote = Rawvote.objects.get(ref=ref, email="test@exemple.fr")
 
 	context = {"ref":ref, "form":form, "optionForm":optionForm}
 	return render(request, template, context)
@@ -245,7 +245,6 @@ def voteadmin_votants(request, hash):
 	msg=None
 
 	if request.method=="POST":
-
 		import csv
 		from io import StringIO
 		import random
@@ -295,10 +294,18 @@ def voteadmin_votants(request, hash):
 	
 #Pour delete un votant
 def delete_rawvote(request, hash, id_rawvote):
+	ref = Ref.objects.get(hash=hash)
 	rawvote = Rawvote.objects.get(id = id_rawvote)
-	if rawvote.ref.hash == hash:
+	if rawvote.ref == ref and ref.status == "CONFIG":
 		rawvote.delete()
-		return HttpResponseRedirect(reverse('voteadmin_votants', args = (hash,)))
+	return HttpResponseRedirect(reverse('voteadmin_votants', args = (hash,)))
+
+#Pour delete tous les votants:
+def delete_all_rawvotes(request, hash):
+	ref = Ref.objects.get(hash=hash)
+	if ref.status == "CONFIG":
+		Rawvote.objects.filter(ref=ref).exclude(email="test@exemple.fr").delete()
+	return HttpResponseRedirect(reverse('voteadmin_votants', args = (hash,)))
 
 #La page de config pour les bulletins
 def voteadmin_bulletins(request, hash):

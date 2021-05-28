@@ -22,7 +22,7 @@
     </li>
     <li class="page-item active" aria-current="page">
       <span class="page-link">
-        Liste des votants
+        Liste des votant.e.s
         <span class="sr-only">(current)</span>
       </span>
     </li>
@@ -41,7 +41,7 @@
 </nav>
 
 <div class="alert alert-info alert-dismissible fade show" role="alert">
-  Cette page permet de construire la liste des votants, c'est-à-dire la liste
+  Cette page permet de construire la liste des votant.e.s, c'est-à-dire la liste
   des adresses mail qui recevront un bulletin. Il est possible de revenir dessus
   tant que les bulletins n'ont pas été envoyés.
   <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -82,9 +82,16 @@
 
 {% if msg %}
 <div class="alert alert-secondary mb-4 mt-4" role="alert">{{msg | safe}}</div>
-{% endif %} {% endif %}
+{% endif %} 
 
-<h3 class="mt-4 mb-4">La liste des votants ({{ref.rawvotes.count}})</h3>
+<button class="btn btn-danger mt-4 mb-4" 
+onclick = "window.location.href='{% url 'delete_all_rawvotes' ref.hash %}';">
+  Supprimer tou.te.s les votant.e.s
+</button>
+
+{% endif %}
+
+<h3 class="mt-4 mb-4">La liste des votant.e.s ({{ref.rawvotes.count}})</h3>
 
 <table class="table">
   <thead>
