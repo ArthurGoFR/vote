@@ -469,9 +469,9 @@ def send_bulletins(request, hash):
 		print("sélection des rawvotes")
 		rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr")[:10]			
 		print("Envoi...")
-		for rawvote in rawvotes:
-			mail_bulletin(rawvote, backend)
-			time.sleep(0.5)
+		# for rawvote in rawvotes:
+		# 	mail_bulletin(rawvote, backend)
+		# 	time.sleep(0.5)
 		ref.status = "RUN"
 		ref.save()
 	return HttpResponseRedirect(reverse('voteadmin_bulletins', args = (hash,)))
