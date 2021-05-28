@@ -5,6 +5,7 @@ from django.forms import modelformset_factory
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import datetime
+import time
 import pytz
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
@@ -465,9 +466,12 @@ def send_bulletins(request, hash):
 		else:
 			backend = generate_backend(ref)
 
+		print("sélection des rawvotes")
 		rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr")			
+		print("Envoi...")
 		for rawvote in rawvotes:
 			mail_bulletin(rawvote, backend)
+			time.sleep(0.5)
 		ref.status = "RUN"
 		ref.save()
 	return HttpResponseRedirect(reverse('voteadmin_bulletins', args = (hash,)))
