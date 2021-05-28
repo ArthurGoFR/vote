@@ -472,6 +472,7 @@ def send_bulletins(request, hash):
 		# for rawvote in rawvotes:
 		# 	mail_bulletin(rawvote, backend)
 		# 	time.sleep(0.5)
+		mail_bulletin(rawvotes[0], backend)
 		ref.status = "RUN"
 		ref.save()
 	return HttpResponseRedirect(reverse('voteadmin_bulletins', args = (hash,)))
