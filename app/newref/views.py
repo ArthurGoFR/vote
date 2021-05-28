@@ -469,7 +469,7 @@ def send_bulletins(request, hash):
 			backend = generate_backend(ref)
 
 		print("sélection des rawvotes")
-		rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr")[:10]			
+		rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr")			
 		print("Envoi...")
 		for rawvote in rawvotes:
 			try:
