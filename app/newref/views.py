@@ -314,8 +314,9 @@ def voteadmin_bulletins(request, hash):
 	ref = Ref.objects.get(hash = hash)
 	
 	if ref.status != "CONFIG":
-		ref.sent_rawvotes = Rawvote.objects.filter(ref=ref).exclude(status="INIT").exclude(email="test@exemple.fr")
+		ref.sent_rawvotes = Rawvote.objects.filter(ref=ref).filter(status="SENT").exclude(email="test@exemple.fr")
 		ref.unsent_rawvotes = Rawvote.objects.filter(ref=ref).filter(status="INIT").exclude(email="test@exemple.fr")
+		ref.failsent_rawvotes = Rawvote.objects.filter(ref=ref).filter(status="FAIL").exclude(email="test@exemple.fr")
 
 	if request.method == "POST":
 		form = BulletinRefForm(request.POST, instance = ref)
@@ -452,7 +453,8 @@ def mail_bulletin(rawvote, backend, private_key=None):
 		rawvote.status="SENT"
 		rawvote.save()
 	except:
-		pass
+		rawvote.status="FAIL"
+		rawvote.save()
 
 #Pour envoyer tous les bulletins (et passer le ref en RUN)
 def send_bulletins(request, hash):

@@ -196,6 +196,7 @@ class OptionFormSimple(ModelForm):
 STAT_CHOICES = [
     ('INIT', "Bulletin non envoyé"),
     ('SENT', "Bulletin envoyé"),
+    ('FAIL', "Echec de l'envoi du bulletin")
     ('STUCK', "Vote arrêté")
     ]
 

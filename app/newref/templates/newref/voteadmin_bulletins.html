@@ -40,9 +40,11 @@
 
 {% if not ref.status == "CONFIG" %}
   <div class="alert alert-warning mt-4">
-    {{ref.sent_rawvotes.count}} bulletins ont été envoyés. {{ref.unsent_rawvotes.count}} n'ont pas été envoyés.<br/>
+    {{ref.sent_rawvotes.count}} bulletins ont été envoyés.<br/>
+    {{ref.unsent_rawvotes.count}} n'ont pas été envoyés.<br/>
+    {{ref.failsent_rawvotes.count}} envois ont échoué.<br/><br/>
     <br/>
-    Le détail des bulletins envoyés et non-envoyé est visible dans l'onglet "Liste des votant.e.s". Il est possible de renvoyer certains bulletins manuellement en modifiant leur statut dans cette même page.
+    Le détail des bulletins envoyés, non-envoyé et échoués est visible dans l'onglet "Liste des votant.e.s". Il est possible de renvoyer certains bulletins manuellement en modifiant leur statut dans cette même page.
   </div>
 
   <hr>
