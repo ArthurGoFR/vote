@@ -110,7 +110,7 @@ onclick = "window.location.href='{% url 'delete_all_rawvotes' ref.hash %}';">
     {% if not rawvote.status == "INIT" %}
       <button class="btn btn-primary"
         onclick="window.location.href='{% url 'not_received_bul' ref.hash rawvote.id %}'"
-        >Passer en "non-envoyé"</button></td>
+        >Re-passer en "non-envoyé"</button></td>
     {% elif rawvote.status == "INIT" and ref.status == "CONFIG" %}
       <a
         href="{% url 'delete_rawvote' ref.hash rawvote.id %}"
