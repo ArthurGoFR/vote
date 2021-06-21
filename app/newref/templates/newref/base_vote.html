@@ -6,10 +6,12 @@
 
 {% block content %}
 
+{% if not rawvote.status == 'PAP_INIT' and not rawvote.status == 'PAP_OK' %}
 <div class="alert alert-info">Ceci est la page de vote de {{rawvote.email}}. <br/>
 Ne partagez pas cette URL : une personne en disposant pourrait modifier vos réponses. <br/>
 <strong>Les votes sont ouverts jusqu'au {{ref.end}} inclus</strong>
 </div>
+{% endif %}
 
 {% if ref.when == "before" %}
     <div class="alert alert-warning mt-4">Les votes ne sont pas encore ouverts.</div>

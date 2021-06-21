@@ -45,4 +45,8 @@ urlpatterns = [
     path('ref_depouillement/<str:hash>', views.ref_depouillement, name='ref_depouillement'),
     path('ref_results/<int:id_ref>', views.ref_results, name='ref_results'),
     path('communicate_results/<str:hash>', views.communicate_results, name='communicate_results'),
+
+    path('live_participants/<str:hash>', views.live_participants, name='live_participants'),
+    path('live_add_participant/<str:hash>', views.live_add_participant, name='live_add_participant'),
+    path('live_conso/<str:hash>', views.live_conso, name='live_conso'),
 ]

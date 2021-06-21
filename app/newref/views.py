@@ -1,6 +1,6 @@
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect
-from .models import Ref, Question, QuestionForm, Option, OptionForm, OptionFormSimple, Rawvote, RawvoteForm, Touralter, Tour, RefForm, SmallRefForm, BulletinRefForm
+from .models import Ref, Question, QuestionForm, Option, OptionForm, OptionFormSimple, Rawvote, RawvoteForm, Touralter, Tour, RefForm, SmallRefForm, BulletinRefForm, CsvRefForm
 from django.forms import modelformset_factory
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -501,10 +501,14 @@ def votepage(request, code):
 		form = RawvoteForm(request.POST, instance=rawvote)
 		if form.is_valid() and ref.when == "during":
 			rawvote = form.save()
+			#On a enregistré les résultats, et si c'est crypté, on crypte et supprime les résultats en clair
 			if ref.crypted:
 				cipher = PKCS1_OAEP.new(RSA.importKey(rawvote.ref.public_key.read()))
 				rawvote.crypted_json = cipher.encrypt(str(rawvote.json).encode("utf-8"))
 				rawvote.json=None
+				rawvote.save()
+			if rawvote.status == "PAP_INIT":
+				rawvote.status = "PAP_OK"
 				rawvote.save()
 
 	if ref.depouillement == "ALT":
@@ -821,3 +825,55 @@ def ref_results(request, id_ref):
 
 def communicate_results(request, hash):
 	a=1
+
+#Pour ajouter les participants quand ils arrivent
+def live_participants(request, hash):
+	template='newref/live_participants.html'
+	ref = Ref.objects.get(hash = hash)
+	
+	if request.method == 'POST':
+		form = CsvRefForm(request.POST, request.FILES, instance=ref)
+		if form.is_valid():
+			ref=form.save()
+	rows = []
+	if ref.csv:
+		import csv
+		with open(ref.csv.path, newline='') as csvfile:
+			reader = csv.reader(csvfile, delimiter=';', quotechar='|')
+			for row in reader:
+				rows.append(row)
+		
+	form = CsvRefForm(instance=ref)
+	ref.rawvotes = Rawvote.objects.filter(ref=ref).exclude(email="test@exemple.fr").order_by("-id")
+	context = {'ref':ref, 'form':form, 'rows':rows}
+	return render(request, template, context)
+
+def live_add_participant(request, hash):
+	ref = Ref.objects.get(hash=hash)
+	if request.method == 'POST':
+		import re
+		email = re.search('<(.*)>', request.POST['coop']).group(1)	
+		existing_rawvote = Rawvote.objects.filter(ref=ref).filter(email=email)
+		if existing_rawvote.count() == 0:
+			import random
+			import string
+			
+			letters = string.ascii_lowercase
+			code = ''.join(random.choice(letters) for i in range(50))
+			rawvote = Rawvote()
+			rawvote.code = code
+			rawvote.ref = ref
+			rawvote.email = email
+			if request.POST['bul_type']=="papier":
+				rawvote.status = "PAP_INIT"	
+			rawvote.save()
+			return HttpResponseRedirect(reverse('live_participants', args = (ref.hash,)))
+		else:
+			return HttpResponse("Un bulletin a déjà été créé pour cette personne.")
+
+def live_conso(request, hash):
+	template="newref/live_conso.html"
+	ref = Ref.objects.get(hash=hash)
+	ref.rawvotes=Rawvote.objects.filter(ref=ref).filter(status="PAP_INIT")
+	context={'ref':ref}
+	return render(request, template, context)

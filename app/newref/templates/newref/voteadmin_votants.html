@@ -89,8 +89,10 @@ onclick = "window.location.href='{% url 'delete_all_rawvotes' ref.hash %}';">
   Supprimer tou.te.s les votant.e.s
 </button>
 
-{% endif %}
 
+{% endif %}
+<div><a href="{% url 'live_participants' ref.hash %}" target="blank">Ajout des participants au fil des arrivées</a></div>
+<div><a href="{% url 'live_conso' ref.hash %}" target="blank">Saisie des bulletins papiers</a></div>
 <h3 class="mt-4 mb-4">La liste des votant.e.s ({{ref.rawvotes.count}})</h3>
 
 <table class="table">
@@ -107,11 +109,11 @@ onclick = "window.location.href='{% url 'delete_all_rawvotes' ref.hash %}';">
       <th scope="row">{{ rawvote.email }}</th>
       <td>{{rawvote.get_status_display }}</td>
       <td>
-    {% if not rawvote.status == "INIT" %}
+    {% if rawvote.status == "SENT" %}
       <button class="btn btn-primary"
         onclick="window.location.href='{% url 'not_received_bul' ref.hash rawvote.id %}'"
         >Re-passer en "non-envoyé"</button></td>
-    {% elif rawvote.status == "INIT" and ref.status == "CONFIG" %}
+    {% elif rawvote.status == "INIT" and ref.status == "CONFIG" or rawvote.status == "PAP_INIT" %}
       <a
         href="{% url 'delete_rawvote' ref.hash rawvote.id %}"
         style="color: red"

@@ -1,0 +1,11 @@
+{% extends 'newref/base.html' %} 
+{% load static %} 
+{% load crispy_forms_tags %}
+{% block head %} {% endblock %} 
+{% block content %}
+
+{% for rawvote in ref.rawvotes %}
+    <div><a href="{% url 'votepage' rawvote.code %}" target='blank'>{{rawvote.id}}</a></div>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'newref/base.html' %} 
+{% load static %} 
+{% load crispy_forms_tags %}
+{% block head %} {% endblock %} 
+{% block content %}
+
+<form method="POST" c action="{% url 'live_participants' ref.hash %}" enctype='multipart/form-data'>
+    {% csrf_token %}
+    {{form|crispy}}
+    <button class="btn btn-outline-primary" type="submit">Modifier le CSV</button>
+</form>
+
+<hr class='mb-4 mt-4'>
+
+<form action="{% url 'live_add_participant' ref.hash %}" method="POST">
+{% csrf_token %}
+  <label for="coop">Trouver un.e Coop : </label>
+  <input list="coops" name="coop" id="coop" style="width: 400px;" required>
+  <datalist id="coops">    
+    {% for row in rows %}
+         <option value="{{row.0}} {{row.1}} <{{row.2}}>">
+    {% endfor %}
+  </datalist>
+  
+  <div class="form-check">
+  <input class="form-check-input" type="radio" name="bul_type" id="exampleRadios1" value="mail" checked>
+  <label class="form-check-label" for="exampleRadios1">
+    Bulletin par mail
+  </label>
+</div>
+<div class="form-check">
+  <input class="form-check-input" type="radio" name="bul_type" id="exampleRadios2" value="papier">
+  <label class="form-check-label" for="exampleRadios2">
+    Bulletin papier
+  </label>
+</div>
+
+<button type="submit" class='btn btn-primary'>Envoyer</button>
+
+</form>
+
+<hr class='mb-4 mt-4'>
+{% for rawvote in ref.rawvotes %}
+    <div>{{rawvote.id}} | {{rawvote.get_status_display}} | {{rawvote.email}} </div>
+{% endfor %}
+
+
+<script>
+  var val = $("#coop").val();
+
+  var obj = $("#coops").find("option[value='" + val + "']");
+
+  if(obj != null && obj.length > 0)
+      alert("valid");  // allow form submission
+  else
+      alert("invalid"); // don't allow form submission
+
+</script>
+
+{% endblock %}
+
+

@@ -55,6 +55,8 @@ class Ref(models.Model):
     email_host_password = models.CharField(max_length=100, blank=True, null=True)
     email_port = models.IntegerField(blank=True, null=True)
 
+    csv = models.FileField(upload_to='csv/', blank=True, null=True)
+
 class RefForm(ModelForm):
 
     start = forms.DateField(
@@ -113,6 +115,7 @@ class SmallRefForm(ModelForm):
         }
 
 
+
 class BulletinRefForm(ModelForm):
     class Meta:
         model = Ref
@@ -129,6 +132,14 @@ class BulletinRefForm(ModelForm):
             'email_use_tls': "TLS",
         }        
 
+class CsvRefForm(ModelForm):
+    
+    class Meta:
+        model = Ref
+        fields = ['csv']
+        labels = {      
+            'csv':"Ce fichier CSV doit contenir l'ensemble des potentiel.le.s participant.e.s. Première colonne : Prénom ; Deuxième : Nom ; Troisième : mail ; Séparation : point-virgule. Il peut être modifier à tout moment si besoin."
+        }
 
 class Question(models.Model):
     text = models.CharField(max_length=1000)
@@ -197,6 +208,8 @@ STAT_CHOICES = [
     ('INIT', "Bulletin non envoyé"),
     ('SENT', "Bulletin envoyé"),
     ('FAIL', "Echec de l'envoi du bulletin"),
+    ('PAP_INIT', "Papier - Transmis"),
+    ('PAP_OK', "Papier - Transcrit"),
     ('STUCK', "Vote arrêté")
     ]
 
