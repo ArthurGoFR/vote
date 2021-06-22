@@ -20,13 +20,14 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+#SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = "HAHAHA"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = int(os.environ.get("DEBUG", default=0))
+DEBUG = int(os.environ.get("DEBUG", default=1))
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS").split(" ")
-DOMAIN_NAME = os.environ.get('DOMAIN_NAME')
+ALLOWED_HOSTS = ['*']
+DOMAIN_NAME = "127.0.0.1:8000"
 # Application definition
 
 INSTALLED_APPS = [
@@ -41,7 +42,6 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'crispy_forms',
     'django_extensions',
-
 ]
 
 MIDDLEWARE = [
@@ -58,7 +58,6 @@ ROOT_URLCONF = 'coopcouture.urls'
 
 TEMPLATES = [
     {
-
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
             os.path.normpath(os.path.join(BASE_DIR, 'templates')),
@@ -134,8 +133,6 @@ USE_L10N = True
 USE_TZ = True
 TIME_ZONE = "Europe/Paris"
 
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
@@ -186,4 +183,4 @@ LOGGING = {
     },
 }
 
-
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
