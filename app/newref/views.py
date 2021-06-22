@@ -103,6 +103,11 @@ def secret_key_check(request):
 
 	return HttpResponseRedirect(reverse('refs'))
 
+def delete_ref(request, hash):
+	ref = Ref.objects.get(hash = hash)
+	ref.delete()
+	return HttpResponseRedirect(reverse('refs', args = ()))
+
 #La page de config de base pour un ref
 def voteadmin(request, hash):
 	template = "newref/voteadmin.html"
@@ -297,16 +302,26 @@ def voteadmin_votants(request, hash):
 def delete_rawvote(request, hash, id_rawvote):
 	ref = Ref.objects.get(hash=hash)
 	rawvote = Rawvote.objects.get(id = id_rawvote)
-	if rawvote.ref == ref and ref.status == "CONFIG":
+	if rawvote.ref == ref:
 		rawvote.delete()
 	return HttpResponseRedirect(reverse('voteadmin_votants', args = (hash,)))
 
 #Pour delete tous les votants:
 def delete_all_rawvotes(request, hash):
 	ref = Ref.objects.get(hash=hash)
-	if ref.status == "CONFIG":
-		Rawvote.objects.filter(ref=ref).exclude(email="test@exemple.fr").delete()
+	# if ref.status == "CONFIG":
+	Rawvote.objects.filter(ref=ref).exclude(email="test@exemple.fr").delete()
 	return HttpResponseRedirect(reverse('voteadmin_votants', args = (hash,)))
+
+def reset_failed_rawvotes(request, hash):
+	ref = Ref.objects.get(hash=hash)
+	rawvotes = 	Rawvote.objects.filter(ref=ref).exclude(email="test@exemple.fr").filter(status="FAIL")
+	for rawvote in rawvotes:
+		rawvote.status = "INIT"
+		rawvote.save()
+	return HttpResponseRedirect(reverse('voteadmin_votants', args = (hash,)))
+
+
 
 #La page de config pour les bulletins
 def voteadmin_bulletins(request, hash):
@@ -391,7 +406,8 @@ def generate_backend(ref, private_key=None):
 		username=ref.email_host_user, 
 		password=password, 
 		use_tls=ref.email_use_tls, 
-		fail_silently=False
+		fail_silently=False,
+		timeout=5,
 		)
 	return backend
 
@@ -462,20 +478,29 @@ def mail_bulletin(rawvote, backend, private_key=None):
 def send_bulletins(request, hash):
 	if request.method=="POST":
 		ref = Ref.objects.get(hash = hash)
-		if ref.crypted:
-			if ref.crypted_email_host_password:
-				backend = generate_backend(ref, request.FILES["private_key"])
+		import copy
+		private_key = copy.deepcopy(request.FILES["private_key"])
+		failures = 0
+		while failures < ref.email_failures:
+			new_private = copy.deepcopy(private_key)
+			rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr").order_by('email')
+			if rawvotes.count()==0:
+				break
+			if ref.crypted:
+				if ref.crypted_email_host_password:
+					backend = generate_backend(ref, new_private)
+				else:
+					return HttpResponseRedirect(reverse('voteadmin_bulletins', args = (hash,)))
 			else:
-				return HttpResponseRedirect(reverse('voteadmin_bulletins', args = (hash,)))
-		else:
-			backend = generate_backend(ref)
+				backend = generate_backend(ref)
 
-		rawvotes = Rawvote.objects.filter(ref = ref).filter(status = "INIT").exclude(email="test@exemple.fr").order_by('email')			
-		
-		success=True
-		for rawvote in rawvotes:
-			if success:
-				success = mail_bulletin(rawvote, backend)
+			success=True
+			for rawvote in rawvotes:
+				if success:
+					success = mail_bulletin(rawvote, backend)
+				else:
+					failures = failures + 1
+					break
 	
 		ref.status = "RUN"
 		ref.save()

@@ -13,6 +13,7 @@ urlpatterns = [
     path('votepage/<str:code>', views.votepage, name='votepage'),
     path('votedelete/<str:code>', views.votedelete, name='votedelete'),
     
+    path('delete_ref/<str:hash>', views.delete_ref, name="delete_ref"),
     path('voteadmin/<str:hash>', views.voteadmin, name='voteadmin'),
     path('voteadmin_questions/<str:hash>', views.voteadmin_questions, name='voteadmin_questions'),
     path('delete_question/<str:hash>/<int:id_question>', views.delete_question, name='delete_question'),
@@ -25,6 +26,7 @@ urlpatterns = [
     path('voteadmin_votants/<str:hash>', views.voteadmin_votants, name='voteadmin_votants'),
     path('delete_rawvote/<str:hash>/<int:id_rawvote>', views.delete_rawvote, name='delete_rawvote'), 
     path('delete_all_rawvotes/<str:hash>', views.delete_all_rawvotes, name='delete_all_rawvotes'), 
+    path('reset_failed_rawvotes/<str:hash>', views.reset_failed_rawvotes, name='reset_failed_rawvotes'), 
 
 
     path('voteadmin_bulletins/<str:hash>', views.voteadmin_bulletins, name='voteadmin_bulletins'),

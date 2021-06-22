@@ -9,16 +9,17 @@
 {% if not rawvote.status == 'PAP_INIT' and not rawvote.status == 'PAP_OK' %}
 <div class="alert alert-info">Ceci est la page de vote de {{rawvote.email}}. <br/>
 Ne partagez pas cette URL : une personne en disposant pourrait modifier vos réponses. <br/>
-<strong>Les votes sont ouverts jusqu'au {{ref.end}} inclus</strong>
+<strong>Ouverture des votes : {{ref.start}} à {{ref.start_time}} <br/>
+  Fermeture des votes : {{ref.end}} à {{ref.end_time}}</strong>
 </div>
 {% endif %}
 
 {% if ref.when == "before" %}
     <div class="alert alert-warning mt-4">Les votes ne sont pas encore ouverts.</div>
 {% elif ref.when == "during" %}
-    <div class="alert alert-success mt-4">Les votes sont ouverts !</div>
+    <div class="alert alert-success mt-4">Les votes sont maintenant ouverts !</div>
 {% elif ref.when == "after" %}
-    <div class="alert alert-danger mt-4">Les votes sont fermés, il n'est plus possible de voter.</div>
+    <div class="alert alert-danger mt-4">Les votes sont maintenant fermés, il n'est plus possible de voter.</div>
 {% endif %}
 
 <h3 class="mt-4 mb-4">{{ref.text}}</h3>

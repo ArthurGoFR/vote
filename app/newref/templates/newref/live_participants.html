@@ -35,7 +35,7 @@
   </label>
 </div>
 
-<button type="submit" class='btn btn-primary'>Envoyer</button>
+<button id="sendbut" type="submit" class='btn btn-primary' disabled>Envoyer</button>
 
 </form>
 
@@ -46,15 +46,21 @@
 
 
 <script>
-  var val = $("#coop").val();
+  
+  $(function() {
+    $("#coop").on("input", function() {
+      checkValidity();
+    });
+  });
 
-  var obj = $("#coops").find("option[value='" + val + "']");
-
-  if(obj != null && obj.length > 0)
-      alert("valid");  // allow form submission
-  else
-      alert("invalid"); // don't allow form submission
-
+  checkValidity = function(){
+    var val = $("#coop").val();
+    var obj = $("#coops").find("option[value='" + val + "']");
+    if(obj != null && obj.length > 0)
+        $("#sendbut").prop('disabled',false) // allow form submission
+    else
+        $("#sendbut").prop('disabled',true) 
+  }
 </script>
 
 {% endblock %}

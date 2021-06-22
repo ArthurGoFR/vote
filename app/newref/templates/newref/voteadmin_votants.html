@@ -84,13 +84,40 @@
 <div class="alert alert-secondary mb-4 mt-4" role="alert">{{msg | safe}}</div>
 {% endif %} 
 
-<button class="btn btn-danger mt-4 mb-4" 
-onclick = "window.location.href='{% url 'delete_all_rawvotes' ref.hash %}';">
-  Supprimer tou.te.s les votant.e.s
+{% endif %}
+
+<button class="btn btn-warning mt-4 mb-4" onclick = "window.location.href='{% url 'reset_failed_rawvotes' ref.hash %}';">
+  Passer tous les échecs en "non-envoyé"
 </button>
 
+<button type="button" class="btn btn-danger mt-4 mb-4" data-toggle="modal" data-target="#exampleModal">
+  Supprimer tous.tes les votant.e.s
+</button>
 
-{% endif %}
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Supprimer tous.tes les votant.e.s</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Êtes vous sûr de vouloir supprimer tous.tes les votant.e.s ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+        <button class="btn btn-danger mt-4 mb-4" onclick = "window.location.href='{% url 'delete_all_rawvotes' ref.hash %}';">
+            Supprimer tou.te.s les votant.e.s
+          </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <div><a href="{% url 'live_participants' ref.hash %}" target="blank">Ajout des participants au fil des arrivées</a></div>
 <div><a href="{% url 'live_conso' ref.hash %}" target="blank">Saisie des bulletins papiers</a></div>
 <h3 class="mt-4 mb-4">La liste des votant.e.s ({{ref.rawvotes.count}})</h3>
@@ -109,17 +136,17 @@ onclick = "window.location.href='{% url 'delete_all_rawvotes' ref.hash %}';">
       <th scope="row">{{ rawvote.email }}</th>
       <td>{{rawvote.get_status_display }}</td>
       <td>
-    {% if rawvote.status == "SENT" %}
+    {% if rawvote.status == "SENT" or rawvote.status == "FAIL" %}
       <button class="btn btn-primary"
         onclick="window.location.href='{% url 'not_received_bul' ref.hash rawvote.id %}'"
-        >Re-passer en "non-envoyé"</button></td>
-    {% elif rawvote.status == "INIT" and ref.status == "CONFIG" or rawvote.status == "PAP_INIT" %}
-      <a
-        href="{% url 'delete_rawvote' ref.hash rawvote.id %}"
-        style="color: red"
-        ><img src="{% static 'newref/png/remove.png' %}" alt="(X)" /></a
-      >
+        >Passer en "non-envoyé"
+      </button>
     {% endif %}
+    <button class="btn btn-danger"
+      onclick="window.location.href='{% url 'delete_rawvote' ref.hash rawvote.id %}'"
+      >Supprimer
+    </button>  
+    
   </td>
     </tr>
     {% endfor %}

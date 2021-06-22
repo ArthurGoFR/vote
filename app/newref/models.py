@@ -54,6 +54,7 @@ class Ref(models.Model):
     email_host_user = models.CharField(max_length=100, blank=True, null=True)
     email_host_password = models.CharField(max_length=100, blank=True, null=True)
     email_port = models.IntegerField(blank=True, null=True)
+    email_failures = models.IntegerField(default=3)
 
     csv = models.FileField(upload_to='csv/', blank=True, null=True)
 
@@ -120,7 +121,7 @@ class BulletinRefForm(ModelForm):
     class Meta:
         model = Ref
         fields = ['bulletin_text','bulletin_img','bulletin_objet',
-         'email_host', 'email_port', 'email_host_user','email_host_password','email_use_tls',]
+         'email_host', 'email_port', 'email_host_user','email_host_password','email_use_tls','email_failures']
 
         labels = {
             'bulletin_text': 'Un texte qui va apparaitre sur le bulletin',
@@ -130,6 +131,7 @@ class BulletinRefForm(ModelForm):
             'email_host_user': "Nom d'utilisateur",
             'email_host_password': "Mot de passe",
             'email_use_tls': "TLS",
+            'email_failures':"Nombre d'échecs d'envoi avant l'interruption de la procédure d'envoi des bulletins. Les échecs peuvent provenir du serveur d'envoi (indiqué ci-dessus) et du serveur de réception (les boites des votant.e.s)."
         }        
 
 class CsvRefForm(ModelForm):
